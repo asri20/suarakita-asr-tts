@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+.Python
+.env
+.venv
+venv/
+env/
+
+# Model files (besar, upload manual atau pakai Git LFS)
+*.h5
+*.pkl
+*.joblib
+
+# Audio outputs (generated)
+tts/audio_output/*.mp3
+audio/*.wav
+audio/*.mp3
+
+# Dataset (terlalu besar untuk GitHub — gunakan Google Drive)
+asr/dataset/
+
+# Streamlit
+.streamlit/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
