@@ -131,7 +131,7 @@ Input: (batch, 32, 13)
 
 - **Frontend**: Streamlit
 - **ASR**: TensorFlow/Keras, librosa, NumPy, scikit-learn
-- **TTS**: edge-tts, asyncio, pydub
+- **TTS**: edge-tts, asyncio
 - **Training**: Google Colab (GPU T4)
 - **VCS**: GitHub
 

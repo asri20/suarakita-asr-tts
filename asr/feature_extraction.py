@@ -9,6 +9,9 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import pandas as pd
+import os
+from pathlib import Path
 from .preprocess import SAMPLE_RATE, N_MFCC, MAX_LEN
 
 
@@ -145,3 +148,95 @@ def plot_confidence(labels: list, probs: np.ndarray) -> plt.Figure:
 
     fig.tight_layout()
     return fig
+
+
+def export_mfcc_to_csv(output_dir: str = None, base_dataset_dir: str = None) -> None:
+    """
+    Export semua MFCC features dari dataset ke CSV format.
+    
+    Args:
+        output_dir: Direktori output untuk CSV files (default: asr/model/mfcc_features/)
+        base_dataset_dir: Direktori dataset (default: asr/dataset/)
+    
+    Example:
+        from asr.feature_extraction import export_mfcc_to_csv
+        export_mfcc_to_csv()
+    """
+    # Set default paths
+    if output_dir is None:
+        output_dir = Path(__file__).parent / "model" / "mfcc_features"
+    else:
+        output_dir = Path(output_dir)
+    
+    if base_dataset_dir is None:
+        base_dataset_dir = Path(__file__).parent / "dataset"
+    else:
+        base_dataset_dir = Path(base_dataset_dir)
+    
+    # Create output directory
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    if not base_dataset_dir.exists():
+        raise ValueError(f"Dataset directory tidak ditemukan: {base_dataset_dir}")
+    
+    print(f"[MFCC Export] Memproses dataset dari: {base_dataset_dir}")
+    print(f"[MFCC Export] Output akan disimpan di: {output_dir}")
+    print("-" * 70)
+    
+    total_files = 0
+    total_classes = 0
+    
+    # Iterasi semua class folders
+    class_folders = sorted([f for f in base_dataset_dir.iterdir() if f.is_dir()])
+    
+    if not class_folders:
+        raise ValueError(f"Tidak ada folder class di: {base_dataset_dir}")
+    
+    for class_folder in class_folders:
+        class_name = class_folder.name
+        class_output_dir = output_dir / class_name
+        class_output_dir.mkdir(parents=True, exist_ok=True)
+        
+        wav_files = sorted(class_folder.glob("*.wav"))
+        total_classes += 1
+        
+        print(f"\n📁 Class: '{class_name}' ({len(wav_files)} files)")
+        
+        for idx, wav_file in enumerate(wav_files, 1):
+            try:
+                # Extract MFCC
+                mfcc = extract_mfcc_from_file(str(wav_file))
+                
+                # Convert to DataFrame
+                # mfcc shape: (MAX_LEN, N_MFCC) = (32, 13)
+                column_names = [f'mfcc_{i}' for i in range(mfcc.shape[1])]
+                df = pd.DataFrame(mfcc, columns=column_names)
+                
+                # Add metadata columns
+                df.insert(0, 'frame_id', range(len(df)))
+                df.insert(1, 'class', class_name)
+                df.insert(2, 'file', wav_file.stem)
+                
+                # Save to CSV
+                csv_filename = f"{wav_file.stem}_mfcc.csv"
+                csv_path = class_output_dir / csv_filename
+                df.to_csv(csv_path, index=False)
+                
+                total_files += 1
+                
+                if idx % 5 == 0 or idx == len(wav_files):
+                    print(f"  ✓ Processed {idx}/{len(wav_files)}: {wav_file.name}")
+                    
+            except Exception as e:
+                print(f"  ✗ Error processing {wav_file.name}: {e}")
+    
+    print("-" * 70)
+    print(f"\n✅ Export selesai!")
+    print(f"   Total classes: {total_classes}")
+    print(f"   Total files: {total_files}")
+    print(f"   Output directory: {output_dir}")
+    print(f"\n📊 Struktur CSV:")
+    print(f"   - frame_id: ID frame (0-31)")
+    print(f"   - class: Nama class")
+    print(f"   - file: Nama file audio")
+    print(f"   - mfcc_0 sampai mfcc_12: 13 MFCC coefficients")

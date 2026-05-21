@@ -15,10 +15,10 @@ DURATION = 2.0          # detik
 N_MFCC = 13
 MAX_LEN = 32            # frames MFCC
 
+# BARU (10 robot commands):
 LABELS = [
-    "yesus", "simon", "andreas", "yakobus", "yohanes",
-    "filipus", "bartomeleus", "tomas", "matius",
-    "tadeus", "yudas", "maria"
+    "ambil", "berhenti", "cepat", "kanan", "kiri", 
+    "lambat", "lepas", "maju", "mulai", "mundur"
 ]
 
 
