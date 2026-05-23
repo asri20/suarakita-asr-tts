@@ -517,8 +517,8 @@ if page == "Beranda":
     st.markdown("""
     <div class="metric-row">
         <div class="metric-card">
-            <div class="metric-value">12</div>
-            <div class="metric-label">Kelas Nama</div>
+            <div class="metric-value">10</div>
+            <div class="metric-label">Kelas Perintah</div>
         </div>
         <div class="metric-card">
             <div class="metric-value">500+</div>
@@ -580,7 +580,7 @@ if page == "Beranda":
         """, unsafe_allow_html=True)
 
     # Dataset labels
-    st.markdown("### 🏷️ Kelas Nama yang Dikenali")
+    st.markdown("### 🏷️ Kelas Perintah yang Dikenali")
     label_cols = st.columns(6)
     colors = ["#3B82F6", "#22D3EE", "#10B981", "#F59E0B",
               "#F43F5E", "#8B5CF6", "#06B6D4", "#84CC16",

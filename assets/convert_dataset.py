@@ -2,7 +2,7 @@ from pydub import AudioSegment
 from pathlib import Path
 
 # Folder dataset utama
-DATASET_DIR = Path("E:\\S1Informatika\\PTU\\Dataset")
+DATASET_DIR = Path(r"E:\S1Informatika\PTU\suarakita-asr-tts\asr\dataset")
 
 # Cari semua file m4a dan mp3 di semua subfolder
 audio_files = list(DATASET_DIR.rglob("*.m4a")) + list(DATASET_DIR.rglob("*.mp3"))

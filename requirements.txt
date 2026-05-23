@@ -11,5 +11,4 @@ edge-tts>=6.1.9
 pydub>=0.25.1
 streamlit-mic-recorder>=0.0.4
 plotly>=5.15.0
-google-cloud-texttospeech
 python-dotenv
