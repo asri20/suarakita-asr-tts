@@ -540,7 +540,7 @@ Proyek ini dikembangkan sebagai tugas akhir oleh:
 - Matilde Ina Ola Dosinaeng
 - Angelina Geronsiana Yudrikewati
 - Asri Tanisha Rumapea
-- Abdullah Luthfi
+- Abdullah Luthfi (luthfikkc@gmail.com)
 - Daniel Febrian Sijabat
 
 ---
