@@ -1181,7 +1181,7 @@ speech-app/
         <code style='background:#1C2537; border:1px solid #2A3650;
                      border-radius:8px; padding:8px 16px; font-size:0.9rem;
                      color:#58A6FF;'>
-            git clone https://github.com/[username]/speech-app.git
+            git clone https://github.com/asri20/suarakita-asr-tts
         </code>
     </div>
     """, unsafe_allow_html=True)
