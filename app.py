@@ -1018,12 +1018,12 @@ elif page == "Text-to-Speech":
         # Contoh teks
         st.markdown("#### 💬 Contoh Teks")
         examples = [
-            "Halo, nama saya Maria.",
+            "Aku imut, lucu, dan menggemaskan.",
             "Selamat pagi, hari ini cuacanya cerah.",
-            "Hello everyone, welcome to SuaraKita.",
+            "Hello everyone, this is SuaraKita.",
             "Artificial intelligence is amazing.",
             "こんにちは、元気ですか？",
-            "안녕하세요, 만나서 반갑습니다.",
+            "당신은 정말 잘생겼어요.",
         ]
         for ex in examples:
             if st.button(f'"{ex[:35]}..."' if len(ex) > 35 else f'"{ex}"',
