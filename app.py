@@ -51,16 +51,24 @@ CSS = """
 
 :root {
   /* Clean Dark Palette from Screenshots */
-  --bg-main: #0B101E;
-  --bg-card: #111827;
+  --bg-main: #0F0A1F;
+  --bg-card: #18122B;
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-hover: rgba(255, 255, 255, 0.2);
   
-  --sky: #38BDF8;
-  --purple: #818CF8;
+  --primary: #8B5CF6;
+  --secondary: #A855F7;
+  --accent: #EC4899;
+
   --green: #10B981;
-  --grad: linear-gradient(90deg, #38BDF8, #818CF8);
-  
+
+  --grad: linear-gradient(
+  135deg,
+  #8B5CF6 0%,
+  #A855F7 50%,
+  #EC4899 100%
+  );
+    
   --text: #F9FAFB;
   --text-muted: #9CA3AF;
   --text-dim: #4B5563;
@@ -124,8 +132,8 @@ section[data-testid="stVerticalBlock"] { gap: 0 !important; }
 .hero { text-align: center; padding: 4rem 0 2rem; position: relative; }
 .hero-badge {
   display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px;
-  border-radius: 999px; background: rgba(56,189,248,.05); 
-  border: 1px solid rgba(56,189,248,.2); color: var(--sky); 
+  border-radius: 999px; background: rgba(139,92,246,.1);
+  border: 1px solid rgba(56,189,248,.2); color: #A855F7;; 
   font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; 
   margin-bottom: 2rem;
 }
@@ -219,7 +227,7 @@ section[data-testid="stVerticalBlock"] { gap: 0 !important; }
   border-radius: 16px; padding: 2rem; text-align: center;
 }
 .pred-label   { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; }
-.pred-name    { font-size: 2.5rem; font-weight: 800; color: var(--green); text-transform: uppercase; margin-bottom: 10px; }
+.pred-name    { font-size: 2.5rem; font-weight: 800; color: #A855F7; text-transform: uppercase; margin-bottom: 10px; }
 .pred-conf    { font-size: 1rem; color: var(--text-muted); }
 .pred-conf strong { color: var(--green); }
 
@@ -320,7 +328,13 @@ def render_waveform():
     return f'<div class="hero-wave">{bars}</div>'
 
 def render_confidence_bars(top_k):
-    colors = ["#10B981", "#38BDF8", "#818CF8", "#F59E0B", "#F43F5E"]
+    colors = colors = [
+    "#8B5CF6",
+    "#A855F7",
+    "#EC4899",
+    "#C084FC",
+    "#F472B6"
+]
     html = '<div style="margin-top:20px;">'
     for i, (lbl, p) in enumerate(top_k):
         c = colors[i] if i < 5 else "#4B5563"
@@ -518,8 +532,8 @@ def page_home():
     with cc1:
         st.markdown("""
         <div class="gc">
-          <div style="width:50px;height:50px;border-radius:12px;background:rgba(56,189,248,.1);color:var(--sky);
-               display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:16px;border:1px solid rgba(56,189,248,.2);">🎤</div>
+          <div style="width:50px;height:50px;border-radius:12px;background:rgba(139,92,246,.1);color:#8B5CF6;
+                display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:16px;border:1px solid rgba(139,92,246,.2);">🎤</div>
           <h3 style="font-size:1.25rem;font-weight:700;margin-bottom:10px;">Automatic Speech Recognition</h3>
           <p style="color:var(--text-muted);font-size:0.9rem;line-height:1.6;">Rekam dari mikrofon atau upload WAV. Ekstraksi 13 MFCC coefficients, klasifikasi CNN 1D, confidence score real-time.</p>
           <div class="tech-wrap">
@@ -529,8 +543,8 @@ def page_home():
     with cc2:
         st.markdown("""
         <div class="gc">
-          <div style="width:50px;height:50px;border-radius:12px;background:rgba(129,140,248,.1);color:var(--purple);
-               display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:16px;border:1px solid rgba(129,140,248,.2);">🔊</div>
+          <div style="width:50px;height:50px;border-radius:12px;background:rgba(236,72,153,.1);color:#EC4899;
+                display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:16px;border:1px solid rgba(236,72,153,.2);">🔊</div>
           <h3 style="font-size:1.25rem;font-weight:700;margin-bottom:10px;">Neural Text-to-Speech</h3>
           <p style="color:var(--text-muted);font-size:0.9rem;line-height:1.6;">Konversi teks Bahasa Indonesia ke suara natural menggunakan Microsoft Edge TTS Neural Voice. Pilih suara, atur kecepatan, download MP3.</p>
           <div class="tech-wrap">
