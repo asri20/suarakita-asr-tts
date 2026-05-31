@@ -305,18 +305,42 @@ section[data-testid="stVerticalBlock"] { gap: 0 !important; }
 
 .stSelectbox > div > div {
   background: var(--bg-card) !important; border: 1px solid var(--border-subtle) !important;
-  border-radius: 8px !important; color: var(--text) !important;
+  border-radius: 8px !important; color: var(--text) !important; cursor: pointer !important;
 }
-
+/* Cursor jadi tangan saat hover */
+div[data-baseweb="select"],
+div[data-baseweb="select"] * {
+  cursor: pointer !important;
+}
 [data-testid="stFileUploader"] {
   background: var(--bg-card) !important; border: 1px dashed var(--border-hover) !important; border-radius: 12px !important;
 }
 [data-testid="stFileUploader"] * { color: var(--text-muted) !important; }
 
 [data-testid="stAudioInput"] {
-  background: var(--bg-card) !important; border: 1px solid var(--border-subtle) !important; border-radius: 12px !important;
+  background: var(--bg-card) !important; border: 1px solid var(--border-subtle) !important; border-radius: 16px !important; padding: 12px !important;
+}
+/* Area recorder putih -> gelap */
+[data-testid="stAudioInput"] > div {
+    background: #18122B !important;
+    border-radius: 12px !important;
 }
 
+/* Teks */
+[data-testid="stAudioInput"] label {
+    color: var(--text) !important;
+}
+
+/* Ikon mic */
+[data-testid="stAudioInput"] svg {
+    color: #A855F7 !important;
+    fill: #A855F7 !important;
+}
+
+/* Timer */
+[data-testid="stAudioInput"] * {
+    color: var(--text-muted) !important;
+}
 .stTabs [data-baseweb="tab-list"] {
   background: transparent !important; border-bottom: 1px solid var(--border-subtle) !important; gap: 20px !important;
 }
