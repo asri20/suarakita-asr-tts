@@ -1,324 +1,940 @@
 """
-app.py - Aplikasi Utama ASR + TTS Bahasa Indonesia
-Streamlit Web Application
+app.py - SuaraKita ASR + TTS Bahasa Indonesia
+Premium AI Interface Redesign — ElevenLabs / OpenAI Voice Mode Aesthetic
 """
 
 import os
 import sys
-import io
 import time
-import tempfile
-import numpy as np
 import streamlit as st
 
-
-# ── Tambahkan root ke path ─────────────────────────────────────────────────────
 ROOT = os.path.dirname(os.path.abspath(__file__))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-# ── Konfigurasi halaman ────────────────────────────────────────────────────────
+# ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="SuaraKita — ASR & TTS Bahasa Indonesia",
+    page_title="SuaraKita — AI Voice Platform",
     page_icon="🎙️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed",
 )
 
-# ── CSS Custom ─────────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# GLOBAL CSS — Premium dark AI aesthetic
+# ══════════════════════════════════════════════════════════════════════════════
 st.markdown("""
 <style>
-/* ─── Import Fonts ──────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
+/* ─── Fonts ─────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Cal+Sans&family=Bricolage+Grotesque:opsz,wght@12..96,200;12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@300;400;500&display=swap');
 
-/* ─── Root Variables ────────────────────────────────────────── */
+/* ─── Design Tokens ─────────────────────────────────────────────────────── */
 :root {
-    --bg-base:      #0A0E1A;
-    --bg-surface:   #111827;
-    --bg-elevated:  #1C2537;
-    --bg-hover:     #243048;
-    --border:       #2A3650;
-    --accent-blue:  #3B82F6;
-    --accent-cyan:  #22D3EE;
-    --accent-green: #10B981;
-    --accent-amber: #F59E0B;
-    --accent-rose:  #F43F5E;
-    --text-primary: #F1F5F9;
-    --text-muted:   #94A3B8;
-    --text-dim:     #64748B;
-    --gradient-1:   linear-gradient(135deg, #3B82F6 0%, #22D3EE 100%);
-    --gradient-2:   linear-gradient(135deg, #10B981 0%, #3B82F6 100%);
-    --gradient-3:   linear-gradient(135deg, #F59E0B 0%, #F43F5E 100%);
-    --shadow-lg:    0 20px 60px rgba(0,0,0,0.5);
-    --radius:       16px;
+  --bg:           #050816;
+  --bg-1:         #080d20;
+  --bg-2:         #0d1530;
+  --surface:      rgba(255,255,255,0.04);
+  --surface-2:    rgba(255,255,255,0.07);
+  --surface-3:    rgba(255,255,255,0.11);
+  --border:       rgba(255,255,255,0.08);
+  --border-2:     rgba(255,255,255,0.14);
+
+  --blue:         #3B82F6;
+  --cyan:         #06B6D4;
+  --purple:       #8B5CF6;
+  --violet:       #7C3AED;
+  --pink:         #EC4899;
+  --green:        #10B981;
+  --amber:        #F59E0B;
+
+  --grad-primary: linear-gradient(135deg, #3B82F6 0%, #06B6D4 50%, #8B5CF6 100%);
+  --grad-glow:    linear-gradient(135deg, rgba(59,130,246,0.3), rgba(6,182,212,0.3), rgba(139,92,246,0.3));
+  --grad-card:    linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+
+  --text:         #F8FAFC;
+  --text-2:       #CBD5E1;
+  --text-3:       #94A3B8;
+  --text-4:       #64748B;
+
+  --r-sm:         12px;
+  --r-md:         18px;
+  --r-lg:         24px;
+  --r-xl:         32px;
+
+  --shadow-blue:  0 0 40px rgba(59,130,246,0.15);
+  --shadow-cyan:  0 0 40px rgba(6,182,212,0.15);
+  --shadow-glow:  0 0 80px rgba(99,102,241,0.2);
+  --shadow-card:  0 8px 32px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.05) inset;
 }
 
-/* ─── Global ────────────────────────────────────────────────── */
+/* ─── Base Reset ────────────────────────────────────────────────────────── */
 html, body, .stApp {
-    background-color: var(--bg-base) !important;
-    font-family: 'DM Sans', sans-serif !important;
-    color: var(--text-primary) !important;
+  background: var(--bg) !important;
+  font-family: 'Bricolage Grotesque', sans-serif !important;
+  color: var(--text) !important;
+  -webkit-font-smoothing: antialiased;
+}
+#MainMenu, footer, header { visibility: hidden !important; }
+.block-container { padding: 0 !important; max-width: 100% !important; }
+[data-testid="stDecoration"] { display: none !important; }
+
+/* ─── Animated Grain Texture ────────────────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  opacity: 0.4;
 }
 
-/* ─── Hide Streamlit chrome ─────────────────────────────────── */
-#MainMenu {visibility:hidden;}
-footer {visibility:hidden;}
-
-/* ─── Sidebar ───────────────────────────────────────────────── */
-[data-testid="stSidebar"] {
-    background: var(--bg-surface) !important;
-    border-right: 1px solid var(--border) !important;
-}
-[data-testid="stSidebar"] * { color: var(--text-primary) !important; }
-
-/* ─── Typography ────────────────────────────────────────────── */
-h1, h2, h3 { font-family: 'Syne', sans-serif !important; font-weight: 800 !important; }
-
-/* ─── Cards ─────────────────────────────────────────────────── */
-.card {
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px 28px;
-    margin-bottom: 20px;
-    transition: border-color 0.2s;
-}
-.card:hover { border-color: var(--accent-blue); }
-
-.card-gradient {
-    background: linear-gradient(135deg, #1C2537 0%, #111827 100%);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 28px;
-    margin-bottom: 20px;
+/* ─── Ambient glow orbs ─────────────────────────────────────────────────── */
+body::after {
+  content: '';
+  position: fixed;
+  top: -40%; left: -10%;
+  width: 70vw; height: 70vw;
+  background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }
 
-/* ─── Hero Banner ───────────────────────────────────────────── */
-.hero {
-    background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%);
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    padding: 48px 40px;
-    margin-bottom: 32px;
-    position: relative;
-    overflow: hidden;
+/* ─── Hide streamlit sidebar completely ─────────────────────────────────── */
+[data-testid="stSidebar"] { display: none !important; }
+[data-testid="collapsedControl"] { display: none !important; }
+
+/* ─── Main layout wrapper ───────────────────────────────────────────────── */
+.main-wrap {
+  position: relative; z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px 80px 32px;
 }
-.hero::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    background: radial-gradient(ellipse 60% 50% at 70% 50%, rgba(59,130,246,0.12) 0%, transparent 70%),
-                radial-gradient(ellipse 40% 40% at 20% 80%, rgba(34,211,238,0.08) 0%, transparent 60%);
-    pointer-events: none;
+
+/* ─── Top Navigation ────────────────────────────────────────────────────── */
+.topnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0 20px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 56px;
+  position: sticky;
+  top: 0;
+  background: rgba(5,8,22,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 100;
 }
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none;
+}
+.nav-logo-icon {
+  width: 36px; height: 36px;
+  background: var(--grad-primary);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 0 20px rgba(59,130,246,0.4);
+}
+.nav-logo-text {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  background: var(--grad-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.nav-links {
+  display: flex; gap: 4px;
+}
+.nav-link {
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.nav-link:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+.nav-link.active {
+  color: var(--text);
+  background: var(--surface-3);
+  border-color: var(--border-2);
+}
+.nav-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(59,130,246,0.15);
+  border: 1px solid rgba(59,130,246,0.3);
+  color: #60A5FA;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ─── Hero ──────────────────────────────────────────────────────────────── */
+.hero-wrap {
+  text-align: center;
+  padding: 80px 20px 100px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-orb-1 {
+  position: absolute; top: -20%; left: 10%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+  pointer-events: none;
+  animation: pulse-orb 6s ease-in-out infinite;
+}
+.hero-orb-2 {
+  position: absolute; top: -10%; right: 5%;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%);
+  pointer-events: none;
+  animation: pulse-orb 8s ease-in-out infinite reverse;
+}
+@keyframes pulse-orb {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: rgba(59,130,246,0.1);
+  border: 1px solid rgba(59,130,246,0.25);
+  color: #60A5FA;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+.hero-eyebrow-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #60A5FA;
+  animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 .hero-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 3rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #F1F5F9 0%, #94A3B8 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin: 0 0 12px 0;
-    line-height: 1.1;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: clamp(2.8rem, 6vw, 5rem);
+  font-weight: 800;
+  line-height: 1.05;
+  margin: 0 0 20px 0;
+  letter-spacing: -0.03em;
+}
+.hero-title-plain { color: var(--text); }
+.hero-title-grad {
+  background: var(--grad-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 .hero-sub {
-    font-size: 1.1rem;
-    color: var(--text-muted);
-    margin: 0 0 28px 0;
-    font-weight: 400;
+  font-size: 1.15rem;
+  color: var(--text-3);
+  max-width: 600px;
+  margin: 0 auto 44px;
+  line-height: 1.65;
+  font-weight: 400;
 }
-.hero-badge {
-    display: inline-block;
-    background: rgba(59,130,246,0.15);
-    border: 1px solid rgba(59,130,246,0.4);
-    color: #60A5FA;
-    font-size: 0.78rem;
-    font-weight: 600;
-    padding: 4px 12px;
-    border-radius: 999px;
-    margin-right: 8px;
-    margin-bottom: 8px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+.hero-cta {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
-
-/* ─── Metric cards ──────────────────────────────────────────── */
-.metric-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 28px;
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 26px;
+  border-radius: 12px;
+  background: var(--grad-primary);
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: none;
+  transition: all 0.25s;
+  box-shadow: 0 4px 24px rgba(59,130,246,0.35);
+  font-family: 'Bricolage Grotesque', sans-serif;
+  text-decoration: none;
 }
-.metric-card {
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px 18px;
-    text-align: center;
-    transition: transform 0.2s, border-color 0.2s;
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(59,130,246,0.5);
 }
-.metric-card:hover { transform: translateY(-2px); border-color: var(--accent-blue); }
-.metric-value {
-    font-family: 'Syne', sans-serif;
-    font-size: 2rem;
-    font-weight: 800;
-    background: var(--gradient-1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 26px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  color: var(--text-2);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.25s;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  text-decoration: none;
 }
-.metric-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
-
-/* ─── Result Display ────────────────────────────────────────── */
-.result-box {
-    background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(59,130,246,0.1) 100%);
-    border: 1px solid rgba(16,185,129,0.4);
-    border-radius: var(--radius);
-    padding: 28px;
-    text-align: center;
-    margin: 20px 0;
-}
-.result-name {
-    font-family: 'Syne', sans-serif;
-    font-size: 2.8rem;
-    font-weight: 800;
-    color: #34D399;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
-.result-conf {
-    font-size: 1rem;
-    color: var(--text-muted);
-    margin-top: 8px;
+.btn-secondary:hover {
+  background: var(--surface-3);
+  border-color: rgba(255,255,255,0.2);
+  color: var(--text);
+  transform: translateY(-2px);
 }
 
+/* ─── Waveform Animation ────────────────────────────────────────────────── */
+.waveform-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 64px;
+  margin: 44px auto 0;
+  max-width: 360px;
+}
+.wave-bar {
+  width: 3px;
+  border-radius: 3px;
+  background: var(--grad-primary);
+  animation: wave 1.4s ease-in-out infinite;
+  opacity: 0.7;
+}
+@keyframes wave {
+  0%, 100% { height: 8px; opacity: 0.3; }
+  50%       { height: 48px; opacity: 0.9; }
+}
+
+/* ─── Stats strip ───────────────────────────────────────────────────────── */
+.stats-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin-bottom: 72px;
+}
+.stat-item {
+  background: var(--surface);
+  padding: 28px 24px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+.stat-value {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  background: var(--grad-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.stat-label {
+  font-size: 0.82rem;
+  color: var(--text-4);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+/* ─── Section heading ───────────────────────────────────────────────────── */
+.section-label {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 10px;
+}
+.section-title {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 12px 0;
+  letter-spacing: -0.02em;
+}
+.section-desc {
+  font-size: 1rem;
+  color: var(--text-3);
+  margin: 0 0 40px 0;
+  line-height: 1.6;
+}
+
+/* ─── Glass Cards ───────────────────────────────────────────────────────── */
+.glass-card {
+  background: var(--grad-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 28px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+}
+.glass-card:hover {
+  border-color: var(--border-2);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card), 0 0 40px rgba(59,130,246,0.08);
+}
+.glass-card-accent {
+  background: var(--grad-card);
+  border: 1px solid rgba(59,130,246,0.25);
+  border-radius: var(--r-lg);
+  padding: 28px;
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-card), inset 0 0 60px rgba(59,130,246,0.03);
+}
+
+/* ─── Feature cards home ────────────────────────────────────────────────── */
+.feat-icon {
+  width: 52px; height: 52px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 18px;
+}
+.feat-icon-blue  { background: rgba(59,130,246,0.15);  border: 1px solid rgba(59,130,246,0.3); }
+.feat-icon-cyan  { background: rgba(6,182,212,0.15);   border: 1px solid rgba(6,182,212,0.3); }
+.feat-icon-purple{ background: rgba(139,92,246,0.15);  border: 1px solid rgba(139,92,246,0.3); }
+.feat-icon-green { background: rgba(16,185,129,0.15);  border: 1px solid rgba(16,185,129,0.3); }
+.feat-title {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 8px 0;
+}
+.feat-desc {
+  font-size: 0.9rem;
+  color: var(--text-3);
+  line-height: 1.6;
+}
+.feat-tags {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px;
+}
+.feat-tag {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--text-3);
+  border: 1px solid var(--border);
+}
+
+/* ─── Flow diagram home ─────────────────────────────────────────────────── */
+.flow-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  flex-wrap: wrap;
+  padding: 36px;
+}
+.flow-node {
+  text-align: center;
+  padding: 18px 22px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  min-width: 120px;
+  transition: border-color 0.2s;
+}
+.flow-node:hover { border-color: var(--border-2); }
+.flow-node-icon { font-size: 1.6rem; margin-bottom: 6px; }
+.flow-node-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-2);
+}
+.flow-node-sub {
+  font-size: 0.75rem;
+  color: var(--text-4);
+  margin-top: 3px;
+}
+.flow-arrow {
+  font-size: 1.2rem;
+  color: var(--text-4);
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+/* ─── Label chips home ──────────────────────────────────────────────────── */
+.label-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+.label-chip {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-2);
+  text-align: center;
+  transition: all 0.2s;
+  cursor: default;
+}
+.label-chip:hover {
+  background: var(--surface-3);
+  border-color: rgba(59,130,246,0.4);
+  color: #60A5FA;
+}
+
+/* ─── ASR page layout ───────────────────────────────────────────────────── */
+.page-header {
+  padding: 40px 0 44px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 44px;
+}
+.page-title {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 10px 0;
+  letter-spacing: -0.025em;
+}
+.page-sub {
+  font-size: 1rem;
+  color: var(--text-3);
+  max-width: 560px;
+  line-height: 1.6;
+}
+
+/* ─── Microphone button ─────────────────────────────────────────────────── */
+.mic-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px;
+}
+.mic-ring-outer {
+  position: relative;
+  width: 160px; height: 160px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 24px;
+}
+.mic-ring-outer::before {
+  content: '';
+  position: absolute; inset: -12px;
+  border-radius: 50%;
+  border: 1px solid rgba(59,130,246,0.2);
+  animation: ping 2.5s ease-out infinite;
+}
+.mic-ring-outer::after {
+  content: '';
+  position: absolute; inset: -24px;
+  border-radius: 50%;
+  border: 1px solid rgba(59,130,246,0.1);
+  animation: ping 2.5s ease-out infinite 0.5s;
+}
+@keyframes ping {
+  0%   { transform: scale(0.95); opacity: 0.6; }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+.mic-btn {
+  width: 160px; height: 160px;
+  border-radius: 50%;
+  background: var(--grad-primary);
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3rem;
+  box-shadow: 0 0 60px rgba(59,130,246,0.4), 0 4px 32px rgba(0,0,0,0.5);
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative; z-index: 1;
+}
+.mic-btn:hover {
+  transform: scale(1.06);
+  box-shadow: 0 0 80px rgba(59,130,246,0.6), 0 8px 48px rgba(0,0,0,0.5);
+}
+.mic-label {
+  font-size: 0.95rem;
+  color: var(--text-3);
+  text-align: center;
+}
+
+/* ─── Demo notice ───────────────────────────────────────────────────────── */
 .demo-notice {
-    background: rgba(245,158,11,0.1);
-    border: 1px solid rgba(245,158,11,0.4);
-    border-radius: 10px;
-    padding: 12px 18px;
-    font-size: 0.85rem;
-    color: #FCD34D;
-    margin: 12px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: var(--r-md);
+  padding: 14px 18px;
+  font-size: 0.875rem;
+  color: #FCD34D;
+  margin-bottom: 28px;
+  line-height: 1.5;
 }
 
-/* ─── Mic recorder card ─────────────────────────────────────── */
-.mic-card {
-    background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(34,211,238,0.08) 100%);
-    border: 1.5px solid rgba(59,130,246,0.35);
-    border-radius: var(--radius);
-    padding: 28px;
-    margin-bottom: 20px;
-    text-align: center;
+/* ─── Prediction result card ────────────────────────────────────────────── */
+.pred-card {
+  background: linear-gradient(145deg, rgba(16,185,129,0.08), rgba(59,130,246,0.08));
+  border: 1px solid rgba(16,185,129,0.25);
+  border-radius: var(--r-xl);
+  padding: 40px 32px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
 }
-.mic-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: #60A5FA;
-    margin-bottom: 6px;
+.pred-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(16,185,129,0.6), transparent);
 }
-.mic-sub {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-bottom: 18px;
+.pred-eyebrow {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-4);
+  margin-bottom: 10px;
+}
+.pred-name {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #34D399, #60A5FA);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+  text-transform: capitalize;
+  margin: 0 0 10px 0;
+}
+.pred-conf {
+  font-size: 1rem;
+  color: var(--text-3);
+}
+.pred-conf strong { color: #34D399; }
+
+/* ─── Confidence bar ────────────────────────────────────────────────────── */
+.conf-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.conf-rank {
+  font-size: 0.8rem;
+  color: var(--text-4);
+  width: 20px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.conf-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-2);
+  width: 120px;
+  flex-shrink: 0;
+  text-transform: capitalize;
+}
+.conf-track {
+  flex: 1;
+  height: 6px;
+  background: var(--surface-3);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.conf-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.conf-pct {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-2);
+  width: 50px;
+  text-align: right;
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
 }
 
-/* ─── Buttons ───────────────────────────────────────────────── */
+/* ─── Upload zone ───────────────────────────────────────────────────────── */
+[data-testid="stFileUploader"] {
+  background: var(--surface) !important;
+  border: 1.5px dashed var(--border-2) !important;
+  border-radius: var(--r-lg) !important;
+  transition: border-color 0.2s !important;
+}
+[data-testid="stFileUploader"]:hover {
+  border-color: rgba(59,130,246,0.5) !important;
+}
+[data-testid="stFileUploader"] * { color: var(--text-3) !important; }
+[data-testid="stFileUploaderDropzone"] {
+  background: transparent !important;
+  padding: 32px !important;
+}
+
+/* ─── Audio input ───────────────────────────────────────────────────────── */
+[data-testid="stAudioInput"] {
+  background: var(--surface) !important;
+  border: 1px solid var(--border-2) !important;
+  border-radius: var(--r-lg) !important;
+  padding: 12px !important;
+}
+
+/* ─── Audio player ──────────────────────────────────────────────────────── */
+audio {
+  width: 100%;
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+/* ─── Streamlit buttons → premium override ──────────────────────────────── */
 .stButton > button {
-    background: var(--gradient-1) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 10px !important;
-    font-weight: 600 !important;
-    font-family: 'DM Sans', sans-serif !important;
-    padding: 10px 24px !important;
-    transition: opacity 0.2s, transform 0.1s !important;
+  background: var(--grad-primary) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  font-family: 'Bricolage Grotesque', sans-serif !important;
+  padding: 12px 24px !important;
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s !important;
+  box-shadow: 0 4px 20px rgba(59,130,246,0.25) !important;
+  letter-spacing: 0.01em !important;
+  width: 100%;
 }
 .stButton > button:hover {
-    opacity: 0.88 !important;
-    transform: translateY(-1px) !important;
+  opacity: 0.9 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 32px rgba(59,130,246,0.4) !important;
+}
+.stButton > button:active {
+  transform: translateY(0) !important;
 }
 
-/* ─── Inputs ────────────────────────────────────────────────── */
-.stTextArea textarea, .stTextInput input {
-    background: var(--bg-elevated) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 10px !important;
-    color: var(--text-primary) !important;
-    font-family: 'DM Sans', sans-serif !important;
+/* Secondary button variant */
+.btn-ghost .stButton > button {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--border-2) !important;
+  color: var(--text-2) !important;
+  box-shadow: none !important;
 }
-.stTextArea textarea:focus, .stTextInput input:focus {
-    border-color: var(--accent-blue) !important;
-    box-shadow: 0 0 0 3px rgba(59,130,246,0.2) !important;
+.btn-ghost .stButton > button:hover {
+  background: var(--surface-3) !important;
+  box-shadow: none !important;
 }
 
-/* ─── Selectbox & Radio ─────────────────────────────────────── */
+/* ─── Text inputs ───────────────────────────────────────────────────────── */
+.stTextArea textarea {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--border-2) !important;
+  border-radius: var(--r-md) !important;
+  color: var(--text) !important;
+  font-family: 'Bricolage Grotesque', sans-serif !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+  resize: vertical;
+}
+.stTextArea textarea:focus {
+  border-color: rgba(59,130,246,0.6) !important;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15) !important;
+}
+.stTextArea label { color: var(--text-3) !important; font-size: 0.85rem !important; }
+
+/* ─── Selectbox ─────────────────────────────────────────────────────────── */
 .stSelectbox > div > div {
-    background: var(--bg-elevated) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 10px !important;
-    color: var(--text-primary) !important;
+  background: var(--surface-2) !important;
+  border: 1px solid var(--border-2) !important;
+  border-radius: 10px !important;
+  color: var(--text) !important;
 }
+.stSelectbox label { color: var(--text-3) !important; font-size: 0.85rem !important; }
 
-/* ─── Progress / Confidence Bar ─────────────────────────────── */
-.conf-bar-container { margin: 6px 0; }
-.conf-bar-label {
-    display: flex; justify-content: space-between;
-    font-size: 0.85rem; color: var(--text-muted);
-    margin-bottom: 4px;
-}
-.conf-bar-track {
-    background: var(--bg-elevated);
-    border-radius: 999px;
-    height: 8px;
-    overflow: hidden;
-}
-.conf-bar-fill {
-    height: 100%;
-    border-radius: 999px;
-    transition: width 0.5s ease;
-}
+/* ─── Slider ────────────────────────────────────────────────────────────── */
+.stSlider > div { color: var(--text-3) !important; }
 
-/* ─── Tabs ───────────────────────────────────────────────────── */
+/* ─── Tabs ──────────────────────────────────────────────────────────────── */
 .stTabs [data-baseweb="tab-list"] {
-    background: var(--bg-surface) !important;
-    border-radius: 12px !important;
-    padding: 4px !important;
-    gap: 4px !important;
-    border: 1px solid var(--border) !important;
+  background: var(--surface) !important;
+  border-radius: 14px !important;
+  padding: 5px !important;
+  border: 1px solid var(--border) !important;
+  gap: 4px !important;
 }
 .stTabs [data-baseweb="tab"] {
-    border-radius: 8px !important;
-    color: var(--text-muted) !important;
-    font-weight: 500 !important;
+  border-radius: 10px !important;
+  color: var(--text-4) !important;
+  font-family: 'Bricolage Grotesque', sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem !important;
+  padding: 8px 18px !important;
+  transition: all 0.2s !important;
 }
 .stTabs [aria-selected="true"] {
-    background: var(--accent-blue) !important;
-    color: white !important;
+  background: rgba(59,130,246,0.2) !important;
+  color: #60A5FA !important;
+  border: 1px solid rgba(59,130,246,0.3) !important;
+}
+.stTabs [data-testid="stTabContent"] {
+  padding: 24px 0 0 0 !important;
 }
 
-/* ─── Divider ────────────────────────────────────────────────── */
-hr { border-color: var(--border) !important; margin: 24px 0 !important; }
+/* ─── Divider ───────────────────────────────────────────────────────────── */
+hr { border-color: var(--border) !important; margin: 28px 0 !important; }
 
-/* ─── File uploader ─────────────────────────────────────────── */
-[data-testid="stFileUploader"] {
-    background: var(--bg-elevated) !important;
-    border: 1.5px dashed var(--border) !important;
-    border-radius: var(--radius) !important;
+/* ─── Caption / help text ───────────────────────────────────────────────── */
+.stCaption, .stMarkdown small { color: var(--text-4) !important; }
+
+/* ─── Info / warning / error boxes ─────────────────────────────────────── */
+.stAlert {
+  border-radius: var(--r-md) !important;
+  border: 1px solid var(--border) !important;
+  background: var(--surface) !important;
 }
 
-/* ─── Audio input (mic recorder) ───────────────────────────── */
-[data-testid="stAudioInput"] {
-    background: var(--bg-elevated) !important;
-    border: 1.5px solid rgba(59,130,246,0.3) !important;
-    border-radius: var(--radius) !important;
-    padding: 8px !important;
+/* ─── TTS voice settings card ───────────────────────────────────────────── */
+.settings-card {
+  background: var(--grad-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  backdrop-filter: blur(16px);
+  margin-bottom: 16px;
+}
+.settings-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-4);
+  margin-bottom: 12px;
+}
+.voice-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 8px;
+}
+
+/* ─── About page cards ──────────────────────────────────────────────────── */
+.tech-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+.tech-pill {
+  padding: 8px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-3);
+  text-align: center;
+  transition: all 0.2s;
+}
+.tech-pill:hover {
+  border-color: rgba(59,130,246,0.4);
+  color: #60A5FA;
+  background: rgba(59,130,246,0.08);
+}
+
+.spec-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.spec-item {
+  background: var(--surface-2);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+.spec-val {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  background: var(--grad-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+.spec-lbl {
+  font-size: 0.75rem;
+  color: var(--text-4);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+/* ─── Sidebar label fix ─────────────────────────────────────────────────── */
+.stRadio label { color: var(--text-2) !important; }
+.stRadio > div { gap: 4px !important; }
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* ─── Code blocks ───────────────────────────────────────────────────────── */
+.stCode, code {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  color: var(--text-2) !important;
+  font-size: 0.82rem !important;
+}
+
+/* ─── Mobile responsive ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .main-wrap { padding: 0 16px 60px; }
+  .stats-strip { grid-template-columns: repeat(2, 1fr); }
+  .hero-title { font-size: 2.2rem; }
+  .topnav { flex-wrap: wrap; gap: 12px; }
+  .flow-wrap { gap: 8px; }
+  .nav-links { display: none; }
+  .spec-grid { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Import Modul ───────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# IMPORTS
+# ══════════════════════════════════════════════════════════════════════════════
 try:
     from asr import (
         LABELS, SAMPLE_RATE,
@@ -328,75 +944,79 @@ try:
         predict_from_bytes, predict_demo, is_model_available,
     )
     ASR_AVAILABLE = True
+    ASR_ERROR = ""
 except ImportError as e:
     ASR_AVAILABLE = False
     ASR_ERROR = str(e)
+    LABELS = ["yesus","simon","andreas","yakobus","yohanes","filipus",
+              "bartomeleus","tomas","matius","tadeus","yudas","maria"]
 
 try:
     from tts import (
-        generate_speech_bytes,
-        list_voices,
-        list_speeds,
-        list_volumes,
-        get_voice_id,
-        get_speed_value,
-        get_volume_value,
+        generate_speech_bytes, list_voices, list_speeds, list_volumes,
+        get_voice_id, get_speed_value, get_volume_value,
     )
     TTS_AVAILABLE = True
+    TTS_ERROR = ""
 except ImportError as e:
     TTS_AVAILABLE = False
     TTS_ERROR = str(e)
 
-# ── Sidebar ────────────────────────────────────────────────────────────────────
-with st.sidebar:
-    st.markdown("""
-    <div style='text-align:center; padding: 20px 0 8px 0;'>
-        <div style='font-size:2.8rem; margin-bottom:8px;'>🎙️</div>
-        <div style='font-family:Syne,sans-serif; font-size:1.3rem; font-weight:800;
-                    background: linear-gradient(135deg,#3B82F6,#22D3EE);
-                    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-                    background-clip:text;'>SuaraKita</div>
-        <div style='font-size:0.75rem; color:#64748B; margin-top:4px;'>
-            ASR & TTS Bahasa Indonesia
-        </div>
-    </div>
-    <hr style='border-color:#2A3650; margin:16px 0;'/>
-    """, unsafe_allow_html=True)
+# ══════════════════════════════════════════════════════════════════════════════
+# SESSION STATE — page routing
+# ══════════════════════════════════════════════════════════════════════════════
+if "page" not in st.session_state:
+    st.session_state.page = "home"
 
-    menu = st.radio(
-        "Navigasi",
-        ["🏠  Beranda", "🎤  Speech Recognition", "🔊  Text-to-Speech", "ℹ️  Tentang Proyek"],
-        label_visibility="collapsed",
-    )
-    page = menu.split("  ")[1]
-
-    st.markdown("<hr style='border-color:#2A3650; margin:20px 0 12px 0;'/>",
-                unsafe_allow_html=True)
-
-    # Status modul
-    st.markdown("**Status Modul**")
-    asr_status = "🟢 Siap" if ASR_AVAILABLE else "🔴 Error"
-    tts_status = "🟢 Siap" if TTS_AVAILABLE else "🔴 Error"
-    model_status = ("🟢 Tersedia" if (ASR_AVAILABLE and is_model_available())
-                    else "🟡 Mode Demo")
+# ══════════════════════════════════════════════════════════════════════════════
+# TOP NAVIGATION
+# ══════════════════════════════════════════════════════════════════════════════
+def topnav():
+    p = st.session_state.page
+    home_cls = "nav-link active" if p == "home"  else "nav-link"
+    asr_cls  = "nav-link active" if p == "asr"   else "nav-link"
+    tts_cls  = "nav-link active" if p == "tts"   else "nav-link"
+    abt_cls  = "nav-link active" if p == "about" else "nav-link"
 
     st.markdown(f"""
-    <div style='font-size:0.82rem; color:#94A3B8; line-height:2;'>
-        ASR Module &nbsp;&nbsp;&nbsp; {asr_status}<br>
-        TTS Module &nbsp;&nbsp;&nbsp; {tts_status}<br>
-        Model H5 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {model_status}
+    <div class="topnav">
+      <div class="nav-logo">
+        <div class="nav-logo-icon">🎙️</div>
+        <span class="nav-logo-text">SuaraKita</span>
+      </div>
+      <div class="nav-links">
+        <span class="{home_cls}" id="nav-home">Beranda</span>
+        <span class="{asr_cls}" id="nav-asr">Speech Recognition</span>
+        <span class="{tts_cls}" id="nav-tts">Text-to-Speech</span>
+        <span class="{abt_cls}" id="nav-about">Tentang</span>
+      </div>
+      <div>
+        <span class="nav-badge">🇮🇩 Bahasa Indonesia</span>
+      </div>
     </div>
     """, unsafe_allow_html=True)
 
+    # Row of actual buttons hidden as nav (Streamlit limitation)
+    c1, c2, c3, c4, _ = st.columns([1, 1.4, 1.2, 1, 4])
+    with c1:
+        if st.button("🏠 Beranda", use_container_width=True, key="nav_home"):
+            st.session_state.page = "home"; st.rerun()
+    with c2:
+        if st.button("🎤 ASR", use_container_width=True, key="nav_asr"):
+            st.session_state.page = "asr"; st.rerun()
+    with c3:
+        if st.button("🔊 TTS", use_container_width=True, key="nav_tts"):
+            st.session_state.page = "tts"; st.rerun()
+    with c4:
+        if st.button("ℹ️ Tentang", use_container_width=True, key="nav_about"):
+            st.session_state.page = "about"; st.rerun()
 
 # ══════════════════════════════════════════════════════════════════════════════
-# HELPER: Blok hasil prediksi (dipakai di tab Rekam & Upload, agar DRY)
+# HELPER: render prediction results
 # ══════════════════════════════════════════════════════════════════════════════
 def render_prediction(audio_bytes, model_ready):
-    """Jalankan prediksi dan tampilkan semua hasil."""
     try:
         audio_np = preprocess_bytes(audio_bytes)
-
         if model_ready:
             result  = predict_from_bytes(audio_bytes)
             is_demo = False
@@ -404,61 +1024,64 @@ def render_prediction(audio_bytes, model_ready):
             result  = predict_demo(audio_np)
             is_demo = True
 
-        label     = result["label_capitalized"]
-        conf      = result["confidence_pct"]
-        probs     = result["probabilities"]
-        top_k     = result["top_k"]
+        label = result["label_capitalized"]
+        conf  = result["confidence_pct"]
+        probs = result["probabilities"]
+        top_k = result["top_k"]
 
-        # ─── Hasil Prediksi ──────────────────────────────────────
+        # ── Prediction card ──────────────────────────────────────────────
         st.markdown(f"""
-        <div class="result-box">
-            <div style='font-size:0.85rem; color:#94A3B8;
-                        text-transform:uppercase; letter-spacing:0.1em;
-                        margin-bottom:8px;'>
-                {"⚠️ Mode Demo — " if is_demo else ""}Prediksi Nama
-            </div>
-            <div class="result-name">{label}</div>
-            <div class="result-conf">
-                Confidence: <strong style='color:#34D399'>{conf:.1f}%</strong>
-            </div>
+        <div class="pred-card">
+          <div class="pred-eyebrow">
+            {"⚠️ Demo Mode — " if is_demo else "✦ Prediksi Nama"}
+          </div>
+          <div class="pred-name">{label}</div>
+          <div class="pred-conf">
+            Confidence: <strong>{conf:.1f}%</strong>
+          </div>
         </div>
         """, unsafe_allow_html=True)
 
-        # ─── Top-K Predictions ───────────────────────────────────
-        st.markdown("#### 📊 Confidence Score")
+        # ── Top-K confidence bars ────────────────────────────────────────
+        st.markdown("<div style='margin-top:28px;'>", unsafe_allow_html=True)
+        st.markdown("""
+        <div class="section-label">Confidence Scores</div>
+        """, unsafe_allow_html=True)
+
+        bar_colors = ["#10B981", "#3B82F6", "#8B5CF6", "#06B6D4", "#F59E0B"]
         for i, (lbl, p) in enumerate(top_k):
-            pct = p * 100
-            bar_color = ("#10B981" if i == 0
-                         else "#3B82F6" if i == 1
-                         else "#6B7280")
+            pct   = p * 100
+            color = bar_colors[i] if i < len(bar_colors) else "#64748B"
+            rank  = ["🥇","🥈","🥉","4","5"][i] if i < 5 else str(i+1)
             st.markdown(f"""
-            <div class="conf-bar-container">
-                <div class="conf-bar-label">
-                    <span>{'🥇' if i==0 else '🥈' if i==1 else '🥉' if i==2 else '  '} {lbl.capitalize()}</span>
-                    <span style='color:#F1F5F9; font-weight:600;'>{pct:.1f}%</span>
-                </div>
-                <div class="conf-bar-track">
-                    <div class="conf-bar-fill"
-                         style='width:{pct:.1f}%; background:{bar_color};'></div>
-                </div>
+            <div class="conf-row">
+              <div class="conf-rank">{rank}</div>
+              <div class="conf-label">{lbl.capitalize()}</div>
+              <div class="conf-track">
+                <div class="conf-fill" style="width:{pct:.1f}%; background:{color};"></div>
+              </div>
+              <div class="conf-pct">{pct:.1f}%</div>
             </div>
             """, unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        # ─── Visualisasi MFCC ────────────────────────────────────
-        st.markdown("#### 🌈 Visualisasi MFCC")
-        fig_mfcc = plot_mfcc(
-            audio_np,
-            title=f"MFCC — Prediksi: {label} ({conf:.1f}%)"
-        )
+        # ── MFCC Visualization ───────────────────────────────────────────
+        st.markdown("---")
+        st.markdown('<div class="section-label">Visualisasi MFCC</div>', unsafe_allow_html=True)
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        fig_mfcc = plot_mfcc(audio_np, title=f"MFCC — {label} ({conf:.1f}%)")
         st.pyplot(fig_mfcc, use_container_width=True)
+        plt.close(fig_mfcc)
 
-        # ─── Confidence Bar Chart ────────────────────────────────
         fig_conf = plot_confidence(LABELS, probs)
         st.pyplot(fig_conf, use_container_width=True)
+        plt.close(fig_conf)
 
-        # ─── Integrasi ke TTS ────────────────────────────────────
+        # ── TTS Integration ──────────────────────────────────────────────
         st.markdown("---")
-        st.markdown("#### 🔄 Lanjutkan ke TTS")
+        st.markdown('<div class="section-label">Lanjutkan ke TTS</div>', unsafe_allow_html=True)
         if TTS_AVAILABLE:
             tts_text = f"Nama yang terdeteksi adalah {label}"
             if st.button("🔊 Bacakan Hasil Prediksi", use_container_width=True,
@@ -466,360 +1089,419 @@ def render_prediction(audio_bytes, model_ready):
                 with st.spinner("Membuat audio..."):
                     try:
                         audio_out = generate_speech_bytes(
-                            tts_text,
-                            voice="id-ID-GadisNeural",
-                            rate="+0%"
-                        )
+                            tts_text, voice="id-ID-GadisNeural", rate="+0%")
                         st.audio(audio_out, format="audio/mp3")
                         st.download_button(
                             "⬇️ Download MP3",
                             data=audio_out,
                             file_name=f"hasil_{label.lower()}.mp3",
                             mime="audio/mpeg",
-                            key=f"dl_btn_{label}_{conf:.0f}"
+                            key=f"dl_{label}_{conf:.0f}",
+                            use_container_width=True,
                         )
                     except Exception as e:
                         st.error(f"TTS Error: {e}")
         else:
             st.info("Modul TTS tidak tersedia.")
 
-        # Simpan ke session untuk cross-page
         st.session_state["asr_result"] = label
-        st.session_state["asr_text"]   = (f"Nama yang terdeteksi adalah {label}"
-                                           if TTS_AVAILABLE else label)
+        st.session_state["asr_text"]   = f"Nama yang terdeteksi adalah {label}"
 
     except Exception as e:
         st.error(f"❌ Error saat memproses: {e}")
         st.exception(e)
 
+# ══════════════════════════════════════════════════════════════════════════════
+# WAVEFORM BARS helper
+# ══════════════════════════════════════════════════════════════════════════════
+def waveform_bars(n=28):
+    import random
+    bars = ""
+    delays = [round(i * 0.06, 2) for i in range(n)]
+    for d in delays:
+        bars += f'<div class="wave-bar" style="animation-delay:{d}s;"></div>'
+    return f'<div class="waveform-container">{bars}</div>'
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PAGE: BERANDA
+# PAGE: HOME
 # ══════════════════════════════════════════════════════════════════════════════
-if page == "Beranda":
+def page_home():
     # Hero
-    st.markdown("""
-    <div class="hero">
-        <div class="hero-title">SuaraKita 🎙️</div>
-        <div class="hero-sub">
-            Platform ASR & TTS Bahasa Indonesia berbasis Deep Learning.<br>
-            Dari suara ke teks, dari teks ke suara — semuanya dalam satu aplikasi.
-        </div>
-        <span class="hero-badge">🧠 Neural Network</span>
-        <span class="hero-badge">🎵 MFCC Features</span>
-        <span class="hero-badge">🇮🇩 Bahasa Indonesia</span>
-        <span class="hero-badge">⚡ Real-time</span>
-        <span class="hero-badge">🔊 edge-tts</span>
+    st.markdown(f"""
+    <div class="hero-wrap">
+      <div class="hero-orb-1"></div>
+      <div class="hero-orb-2"></div>
+      <div class="hero-eyebrow">
+        <span class="hero-eyebrow-dot"></span>
+        AI Voice Platform · Bahasa Indonesia
+      </div>
+      <h1 class="hero-title">
+        <span class="hero-title-plain">Transform Voice Into</span><br>
+        <span class="hero-title-grad">Intelligence</span>
+      </h1>
+      <p class="hero-sub">
+        Platform ASR & TTS Bahasa Indonesia berbasis Deep Learning.
+        Kenali nama dari suara dengan Neural Network CNN, dan ubah teks
+        menjadi suara natural menggunakan Microsoft Neural TTS.
+      </p>
     </div>
     """, unsafe_allow_html=True)
 
-    # Metrics
-    st.markdown("""
-    <div class="metric-row">
-        <div class="metric-card">
-            <div class="metric-value">10</div>
-            <div class="metric-label">Kelas Perintah</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-value">500+</div>
-            <div class="metric-label">Audio Dataset</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-value">13</div>
-            <div class="metric-label">Koefisien MFCC</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-value">CNN</div>
-            <div class="metric-label">Arsitektur Model</div>
-        </div>
+    # CTA buttons
+    c1, c2, c3 = st.columns([2,1,1,])
+    with c2:
+        if st.button("🎤 Speech Recognition", use_container_width=True, key="cta_asr"):
+            st.session_state.page = "asr"; st.rerun()
+    with c3:
+        if st.button("🔊 Generate AI Voice", use_container_width=True, key="cta_tts"):
+            st.session_state.page = "tts"; st.rerun()
+
+    st.markdown(waveform_bars(32), unsafe_allow_html=True)
+
+    st.markdown("<div style='height:56px'></div>", unsafe_allow_html=True)
+
+    # Stats strip
+    asr_status = "🟢 Ready" if ASR_AVAILABLE else "🔴 Error"
+    tts_status = "🟢 Ready" if TTS_AVAILABLE else "🔴 Error"
+    model_st   = "🟢 Loaded" if (ASR_AVAILABLE and is_model_available()) else "🟡 Demo"
+
+    st.markdown(f"""
+    <div class="stats-strip">
+      <div class="stat-item">
+        <div class="stat-value">12</div>
+        <div class="stat-label">Kelas Nama</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">500+</div>
+        <div class="stat-label">Audio Dataset</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">CNN</div>
+        <div class="stat-label">Arsitektur</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">13</div>
+        <div class="stat-label">Koefisien MFCC</div>
+      </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Feature Cards
-    col1, col2 = st.columns(2)
-    with col1:
+    # Feature cards
+    col_a, col_b = st.columns(2, gap="medium")
+    with col_a:
         st.markdown("""
-        <div class="card">
-            <div style='font-size:1.8rem; margin-bottom:12px;'>🎤</div>
-            <div style='font-family:Syne,sans-serif; font-size:1.1rem;
-                        font-weight:700; margin-bottom:8px;'>
-                Automatic Speech Recognition
-            </div>
-            <div style='color:#94A3B8; font-size:0.9rem; line-height:1.6;'>
-                Rekam langsung dari mikrofon atau upload file audio,
-                sistem akan mengekstrak fitur MFCC dan memprediksi nama
-                menggunakan model CNN 1D yang dilatih dengan dataset Bahasa Indonesia.
-            </div>
-            <div style='margin-top:16px; font-size:0.8rem; color:#64748B;'>
-                ✓ Rekam langsung &nbsp;·&nbsp;
-                ✓ Ekstraksi MFCC 13 koefisien &nbsp;·&nbsp;
-                ✓ Confidence Score
-            </div>
+        <div class="glass-card">
+          <div class="feat-icon feat-icon-blue">🎤</div>
+          <div class="feat-title">Automatic Speech Recognition</div>
+          <div class="feat-desc">
+            Rekam langsung dari mikrofon atau upload file WAV. Sistem mengekstrak
+            13 koefisien MFCC dan memprediksi nama menggunakan CNN 1D yang dilatih
+            dengan dataset Bahasa Indonesia.
+          </div>
+          <div class="feat-tags">
+            <span class="feat-tag">MFCC Features</span>
+            <span class="feat-tag">CNN 1D Model</span>
+            <span class="feat-tag">Real-time</span>
+            <span class="feat-tag">Confidence Score</span>
+          </div>
         </div>
         """, unsafe_allow_html=True)
 
-    with col2:
+    with col_b:
         st.markdown("""
-        <div class="card">
-            <div style='font-size:1.8rem; margin-bottom:12px;'>🔊</div>
-            <div style='font-family:Syne,sans-serif; font-size:1.1rem;
-                        font-weight:700; margin-bottom:8px;'>
-                Text-to-Speech
-            </div>
-            <div style='color:#94A3B8; font-size:0.9rem; line-height:1.6;'>
-                Konversi teks Bahasa Indonesia menjadi suara berkualitas tinggi
-                menggunakan Microsoft edge-tts dengan pilihan suara pria/wanita,
-                kecepatan, dan volume yang dapat disesuaikan.
-            </div>
-            <div style='margin-top:16px; font-size:0.8rem; color:#64748B;'>
-                ✓ Suara Neural ID &nbsp;·&nbsp;
-                ✓ Download MP3 &nbsp;·&nbsp;
-                ✓ Kecepatan variabel
-            </div>
+        <div class="glass-card">
+          <div class="feat-icon feat-icon-cyan">🔊</div>
+          <div class="feat-title">Neural Text-to-Speech</div>
+          <div class="feat-desc">
+            Konversi teks Bahasa Indonesia menjadi suara berkualitas tinggi menggunakan
+            Microsoft edge-tts Neural Voice. Pilih suara pria/wanita, atur kecepatan
+            dan volume, lalu download MP3.
+          </div>
+          <div class="feat-tags">
+            <span class="feat-tag">edge-tts</span>
+            <span class="feat-tag">Neural Voice</span>
+            <span class="feat-tag">MP3 Export</span>
+            <span class="feat-tag">Multilingual</span>
+          </div>
         </div>
         """, unsafe_allow_html=True)
 
-    # Dataset labels
-    st.markdown("### 🏷️ Kelas Perintah yang Dikenali")
-    label_cols = st.columns(6)
-    colors = ["#3B82F6", "#22D3EE", "#10B981", "#F59E0B",
-              "#F43F5E", "#8B5CF6", "#06B6D4", "#84CC16",
-              "#F97316", "#EC4899", "#14B8A6", "#A78BFA"]
-    for i, label in enumerate(LABELS):
-        with label_cols[i % 6]:
+    st.markdown("<div style='height:48px'></div>", unsafe_allow_html=True)
+
+    # Label grid
+    st.markdown("""
+    <div class="section-label">Kelas yang Dikenali</div>
+    <div class="section-title">12 Nama Bahasa Indonesia</div>
+    <div class="section-desc">Model dilatih untuk mengenali nama-nama berikut dari rekaman suara.</div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="label-grid">', unsafe_allow_html=True)
+    for lbl in LABELS:
+        st.markdown(f'<div class="label-chip">📌 {lbl.capitalize()}</div>',
+                    unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown("<div style='height:56px'></div>", unsafe_allow_html=True)
+
+    # Pipeline diagram
+    st.markdown("""
+    <div class="section-label">Pipeline</div>
+    <div class="section-title">Alur ASR → TTS</div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="glass-card-accent">
+      <div class="flow-wrap">
+        <div class="flow-node">
+          <div class="flow-node-icon">🎙️</div>
+          <div class="flow-node-title">Audio Input</div>
+          <div class="flow-node-sub">Mic / Upload</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">
+          <div class="flow-node-icon">🔧</div>
+          <div class="flow-node-title">Preprocess</div>
+          <div class="flow-node-sub">Norm & Trim</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">
+          <div class="flow-node-icon">📊</div>
+          <div class="flow-node-title">MFCC</div>
+          <div class="flow-node-sub">13 coeff</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">
+          <div class="flow-node-icon">🧠</div>
+          <div class="flow-node-title">CNN Model</div>
+          <div class="flow-node-sub">Inferensi</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">
+          <div class="flow-node-icon">📝</div>
+          <div class="flow-node-title">Teks Output</div>
+          <div class="flow-node-sub">Prediksi</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">
+          <div class="flow-node-icon">🔊</div>
+          <div class="flow-node-title">TTS Audio</div>
+          <div class="flow-node-sub">edge-tts</div>
+        </div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Module status
+    st.markdown("<div style='height:32px'></div>", unsafe_allow_html=True)
+    s1, s2, s3 = st.columns(3, gap="medium")
+    for col, title, icon, status, color in [
+        (s1, "ASR Module", "🎤", asr_status, "#10B981" if ASR_AVAILABLE else "#F43F5E"),
+        (s2, "TTS Module", "🔊", tts_status, "#10B981" if TTS_AVAILABLE else "#F43F5E"),
+        (s3, "CNN Model",  "🧠", model_st,   "#10B981" if (ASR_AVAILABLE and is_model_available()) else "#F59E0B"),
+    ]:
+        with col:
             st.markdown(f"""
-            <div style='background:rgba({','.join(str(int(c,16)) for c in
-                [colors[i][1:3], colors[i][3:5], colors[i][5:7]])},0.15);
-                border:1px solid {colors[i]}60;
-                border-radius:10px; padding:10px 8px;
-                text-align:center; margin-bottom:10px;
-                font-weight:600; font-size:0.9rem;
-                color:{colors[i]};'>
-                {label.capitalize()}
+            <div class="glass-card" style="text-align:center; padding:24px 16px;">
+              <div style="font-size:1.8rem; margin-bottom:8px;">{icon}</div>
+              <div style="font-size:0.82rem; font-weight:700; text-transform:uppercase;
+                          letter-spacing:0.08em; color:var(--text-4); margin-bottom:6px;">
+                {title}
+              </div>
+              <div style="font-size:0.95rem; font-weight:600; color:{color};">{status}</div>
             </div>
             """, unsafe_allow_html=True)
-
-    # Flow diagram
-    st.markdown("### 🔄 Alur Integrasi ASR → TTS")
-    st.markdown("""
-    <div class="card-gradient" style='text-align:center; padding:32px;'>
-        <div style='display:flex; align-items:center; justify-content:center;
-                    gap:16px; flex-wrap:wrap; font-size:0.95rem;'>
-            <div style='background:#1C2537; border:1px solid #3B82F6;
-                        border-radius:12px; padding:14px 20px;'>
-                🎙️ <strong>Audio Input</strong><br>
-                <span style='font-size:0.78rem; color:#64748B;'>Rekaman / Upload</span>
-            </div>
-            <div style='color:#3B82F6; font-size:1.5rem;'>→</div>
-            <div style='background:#1C2537; border:1px solid #22D3EE;
-                        border-radius:12px; padding:14px 20px;'>
-                📊 <strong>Preprocessing</strong><br>
-                <span style='font-size:0.78rem; color:#64748B;'>Normalisasi & MFCC</span>
-            </div>
-            <div style='color:#22D3EE; font-size:1.5rem;'>→</div>
-            <div style='background:#1C2537; border:1px solid #10B981;
-                        border-radius:12px; padding:14px 20px;'>
-                🧠 <strong>CNN Model</strong><br>
-                <span style='font-size:0.78rem; color:#64748B;'>Prediksi Nama</span>
-            </div>
-            <div style='color:#10B981; font-size:1.5rem;'>→</div>
-            <div style='background:#1C2537; border:1px solid #F59E0B;
-                        border-radius:12px; padding:14px 20px;'>
-                📝 <strong>Teks Output</strong><br>
-                <span style='font-size:0.78rem; color:#64748B;'>Hasil Prediksi</span>
-            </div>
-            <div style='color:#F59E0B; font-size:1.5rem;'>→</div>
-            <div style='background:#1C2537; border:1px solid #F43F5E;
-                        border-radius:12px; padding:14px 20px;'>
-                🔊 <strong>TTS Output</strong><br>
-                <span style='font-size:0.78rem; color:#64748B;'>edge-tts Audio</span>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: ASR
 # ══════════════════════════════════════════════════════════════════════════════
-elif page == "Speech Recognition":
+def page_asr():
     st.markdown("""
-    <div style='margin-bottom:8px;'>
-        <span class='hero-badge'>🤖 CNN 1D Model</span>
-        <span class='hero-badge'>🎵 MFCC Features</span>
-        <span class='hero-badge'>🎙️ Real-time Mic</span>
+    <div class="page-header">
+      <div class="section-label">AI · Speech Recognition</div>
+      <div class="page-title">🎤 Automatic Speech Recognition</div>
+      <div class="page-sub">
+        Rekam langsung dari mikrofon atau upload file audio WAV — sistem memprediksi
+        nama menggunakan Neural Network berbasis fitur MFCC 13 koefisien.
+      </div>
     </div>
-    <h1 style='font-family:Syne,sans-serif; font-size:2.2rem; margin:0 0 8px 0;'>
-        🎤 Automatic Speech Recognition
-    </h1>
-    <p style='color:#94A3B8; font-size:1rem; margin-bottom:28px;'>
-        Rekam langsung dari mikrofon atau upload file audio WAV — sistem akan memprediksi
-        nama menggunakan Neural Network berbasis fitur MFCC.
-    </p>
     """, unsafe_allow_html=True)
 
     if not ASR_AVAILABLE:
         st.error(f"❌ Modul ASR tidak tersedia: {ASR_ERROR}")
-        st.stop()
+        return
 
-    # Cek model
     model_ready = is_model_available()
     if not model_ready:
         st.markdown("""
         <div class="demo-notice">
-            ⚠️ <strong>Mode Demo Aktif</strong> — File <code>asr/model/model_asr.h5</code> belum ditemukan.
-            Prediksi menggunakan model random (tidak akurat). Lakukan training di Google Colab
-            dan letakkan model di <code>asr/model/model_asr.h5</code> untuk hasil nyata.
+          <span style="font-size:1.2rem;">⚠️</span>
+          <div>
+            <strong>Mode Demo Aktif</strong> — File <code>asr/model/model_asr.h5</code>
+            belum ditemukan. Prediksi menggunakan distribusi acak. Jalankan training di
+            Google Colab dan letakkan model di <code>asr/model/model_asr.h5</code>
+            untuk hasil nyata.
+          </div>
         </div>
         """, unsafe_allow_html=True)
 
-    # ── 3 Tab: Rekam | Upload | Panduan ───────────────────────────────────────
     tab_mic, tab_upload, tab_info = st.tabs([
-        "🎙️ Rekam Langsung",
-        "📂 Upload Audio",
-        "📋 Panduan Dataset",
+        "🎙️  Rekam Langsung",
+        "📂  Upload Audio",
+        "📋  Panduan Dataset",
     ])
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # TAB 1 — REKAM LANGSUNG
-    # ─────────────────────────────────────────────────────────────────────────
+    # ── Tab 1: Mic ────────────────────────────────────────────────────────────
     with tab_mic:
-        col_main, col_side = st.columns([3, 2])
+        col_main, col_side = st.columns([3, 2], gap="large")
 
         with col_main:
             st.markdown("""
-            <div class="mic-card">
-                <div class="mic-title">🎙️ Rekam Suara dari Mikrofon</div>
-                <div class="mic-sub">
-                    Klik tombol mikrofon di bawah → ucapkan nama → klik stop.<br>
-                    Sistem langsung memprediksi nama yang diucapkan.
-                </div>
+            <div class="glass-card-accent" style="text-align:center; margin-bottom:24px; padding:36px 24px;">
+              <div class="section-label" style="margin-bottom:6px;">Langkah 1</div>
+              <div style="font-size:1.05rem; font-weight:700; color:var(--text); margin-bottom:6px;">
+                Rekam Suara dari Mikrofon
+              </div>
+              <div style="font-size:0.88rem; color:var(--text-3); line-height:1.6;">
+                Klik 🎙️ untuk mulai → ucapkan nama → klik ⏹️ stop
+              </div>
             </div>
             """, unsafe_allow_html=True)
 
-            # ── Komponen perekam bawaan Streamlit ─────────────────────────────
             audio_recorded = st.audio_input(
-                "Klik 🎙️ untuk mulai rekam, klik ⏹️ untuk stop",
+                "Klik 🎙️ untuk mulai merekam, klik ⏹️ untuk berhenti",
                 key="mic_recorder",
             )
 
             if audio_recorded is not None:
                 audio_bytes = audio_recorded.read()
-
-                # Putar ulang rekaman
-                st.markdown("**▶️ Rekaman kamu:**")
+                st.markdown("""
+                <div style="font-size:0.82rem; font-weight:700; text-transform:uppercase;
+                            letter-spacing:0.1em; color:var(--text-4); margin:16px 0 6px;">
+                  ▶️ Rekaman Anda
+                </div>
+                """, unsafe_allow_html=True)
                 st.audio(audio_bytes, format="audio/wav")
 
-                # Tombol analisis
+                st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
                 if st.button("🚀 Analisis & Prediksi", type="primary",
-                             use_container_width=True, key="btn_predict_mic"):
-                    with st.spinner("Memproses audio..."):
+                             use_container_width=True, key="btn_mic_predict"):
+                    with st.spinner("Memproses audio dan menjalankan model..."):
                         render_prediction(audio_bytes, model_ready)
             else:
                 st.markdown("""
-                <div style='background:#1C2537; border:1px dashed #2A3650;
-                            border-radius:12px; padding:32px; text-align:center;
-                            color:#64748B; font-size:0.9rem; margin-top:8px;'>
-                    🎙️ Belum ada rekaman.<br>
-                    <span style='font-size:0.8rem;'>
-                        Klik tombol mikrofon di atas untuk mulai merekam.
-                    </span>
+                <div style="background:var(--surface); border:1.5px dashed var(--border-2);
+                            border-radius:var(--r-lg); padding:44px; text-align:center;
+                            color:var(--text-4); font-size:0.9rem; margin-top:8px;">
+                  <div style="font-size:2rem; margin-bottom:10px;">🎙️</div>
+                  Belum ada rekaman.<br>
+                  <span style="font-size:0.8rem;">
+                    Klik tombol mikrofon di atas untuk mulai merekam.
+                  </span>
                 </div>
                 """, unsafe_allow_html=True)
 
         with col_side:
-            st.markdown("#### ℹ️ Kelas yang Didukung")
+            st.markdown("""
+            <div class="settings-label">Kelas yang Didukung</div>
+            """, unsafe_allow_html=True)
+
             for lbl in LABELS:
                 st.markdown(f"""
-                <div style='background:#1C2537; border:1px solid #2A3650;
-                            border-radius:8px; padding:8px 14px; margin-bottom:6px;
-                            font-size:0.9rem;'>
-                    📌 {lbl.capitalize()}
+                <div style="background:var(--surface-2); border:1px solid var(--border);
+                            border-radius:9px; padding:9px 14px; margin-bottom:6px;
+                            font-size:0.88rem; font-weight:600; color:var(--text-3);
+                            transition:all 0.2s;">
+                  📌 {lbl.capitalize()}
                 </div>
                 """, unsafe_allow_html=True)
 
-            st.markdown("#### 💡 Tips Rekam")
+            st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
             st.markdown("""
-            <div class="card" style='padding:16px;'>
-                <div style='font-size:0.85rem; color:#94A3B8; line-height:1.8;'>
-                    ✅ Izinkan akses mikrofon di browser<br>
-                    ✅ Rekam di tempat senyap<br>
-                    ✅ Durasi cukup 1–2 detik<br>
-                    ✅ Ucapkan nama dengan jelas<br>
-                    ✅ Jarak mikrofon ±20–30 cm
-                </div>
+            <div class="glass-card" style="padding:18px;">
+              <div class="settings-label">Tips Rekam</div>
+              <div style="font-size:0.85rem; color:var(--text-3); line-height:2;">
+                ✅ Izinkan akses mikrofon browser<br>
+                ✅ Rekam di tempat senyap<br>
+                ✅ Durasi cukup 1–2 detik<br>
+                ✅ Ucapkan nama dengan jelas<br>
+                ✅ Jarak mikrofon ±20–30 cm
+              </div>
             </div>
             """, unsafe_allow_html=True)
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # TAB 2 — UPLOAD FILE
-    # ─────────────────────────────────────────────────────────────────────────
+    # ── Tab 2: Upload ─────────────────────────────────────────────────────────
     with tab_upload:
-        col_main, col_side = st.columns([3, 2])
+        col_main, col_side = st.columns([3, 2], gap="large")
 
         with col_main:
-            st.markdown("#### 📂 Upload File Audio")
+            st.markdown("""
+            <div style="font-size:0.82rem; font-weight:700; text-transform:uppercase;
+                        letter-spacing:0.1em; color:var(--text-4); margin-bottom:12px;">
+              Upload File Audio
+            </div>
+            """, unsafe_allow_html=True)
+
             uploaded = st.file_uploader(
-                "Pilih file audio WAV (16kHz, 1–2 detik)",
-                type=["wav", "WAV", "mp3", "ogg"],
-                help="Format terbaik: WAV mono 16kHz. Ucapkan salah satu dari 12 nama yang tersedia.",
+                "Pilih file audio WAV / MP3 / OGG (16kHz, 1–2 detik)",
+                type=["wav","WAV","mp3","ogg"],
+                help="Format terbaik: WAV mono 16kHz",
                 key="file_uploader",
             )
 
             if uploaded:
                 audio_bytes = uploaded.read()
                 st.audio(audio_bytes, format="audio/wav")
-
+                st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
                 if st.button("🚀 Analisis & Prediksi", type="primary",
-                             use_container_width=True, key="btn_predict_upload"):
+                             use_container_width=True, key="btn_upload_predict"):
                     with st.spinner("Memproses audio..."):
                         render_prediction(audio_bytes, model_ready)
             else:
                 st.markdown("""
-                <div style='background:#1C2537; border:1px dashed #2A3650;
-                            border-radius:12px; padding:32px; text-align:center;
-                            color:#64748B; font-size:0.9rem; margin-top:8px;'>
-                    📂 Belum ada file dipilih.<br>
-                    <span style='font-size:0.8rem;'>
-                        Klik "Browse files" di atas untuk upload file audio.
-                    </span>
+                <div style="background:var(--surface); border:1.5px dashed var(--border-2);
+                            border-radius:var(--r-lg); padding:44px; text-align:center;
+                            color:var(--text-4); font-size:0.9rem; margin-top:8px;">
+                  <div style="font-size:2rem; margin-bottom:10px;">📂</div>
+                  Belum ada file dipilih.<br>
+                  <span style="font-size:0.8rem;">Klik Browse files untuk upload.</span>
                 </div>
                 """, unsafe_allow_html=True)
 
         with col_side:
-            st.markdown("#### ℹ️ Kelas yang Didukung")
+            st.markdown("""
+            <div class="settings-label">Kelas yang Didukung</div>
+            """, unsafe_allow_html=True)
             for lbl in LABELS:
                 st.markdown(f"""
-                <div style='background:#1C2537; border:1px solid #2A3650;
-                            border-radius:8px; padding:8px 14px; margin-bottom:6px;
-                            font-size:0.9rem;'>
-                    📌 {lbl.capitalize()}
+                <div style="background:var(--surface-2); border:1px solid var(--border);
+                            border-radius:9px; padding:9px 14px; margin-bottom:6px;
+                            font-size:0.88rem; font-weight:600; color:var(--text-3);">
+                  📌 {lbl.capitalize()}
                 </div>
                 """, unsafe_allow_html=True)
 
-            st.markdown("#### 💡 Tips Upload")
             st.markdown("""
-            <div class="card" style='padding:16px;'>
-                <div style='font-size:0.85rem; color:#94A3B8; line-height:1.8;'>
-                    ✅ Gunakan mikrofon berkualitas<br>
-                    ✅ Rekam di tempat senyap<br>
-                    ✅ Durasi 1–2 detik<br>
-                    ✅ Sample rate 16000 Hz<br>
-                    ✅ Format WAV mono
-                </div>
+            <div class="glass-card" style="padding:18px; margin-top:16px;">
+              <div class="settings-label">Format yang Didukung</div>
+              <div style="font-size:0.85rem; color:var(--text-3); line-height:2;">
+                ✅ WAV mono 16000 Hz<br>
+                ✅ MP3<br>
+                ✅ OGG<br>
+                ✅ Durasi 1–2 detik<br>
+                ✅ Suara jernih, minim noise
+              </div>
             </div>
             """, unsafe_allow_html=True)
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # TAB 3 — PANDUAN DATASET
-    # ─────────────────────────────────────────────────────────────────────────
+    # ── Tab 3: Info ───────────────────────────────────────────────────────────
     with tab_info:
-        st.markdown("""
-        ### 📁 Struktur Dataset
-        Dataset berisi rekaman audio 12 nama dalam Bahasa Indonesia.
-        """)
-        st.code("""
-dataset/
+        c1, c2 = st.columns(2, gap="medium")
+        with c1:
+            st.markdown("""
+            <div class="section-label">Struktur Data</div>
+            """, unsafe_allow_html=True)
+            st.code("""dataset/
 ├── yesus/         (40-50 file .wav)
 ├── simon/         (40-50 file .wav)
 ├── andreas/       (40-50 file .wav)
@@ -831,120 +1513,111 @@ dataset/
 ├── matius/        (40-50 file .wav)
 ├── tadeus/        (40-50 file .wav)
 ├── yudas/         (40-50 file .wav)
-└── maria/         (40-50 file .wav)
-        """, language="text")
+└── maria/         (40-50 file .wav)""", language="text")
 
-        st.markdown("""
-        ### 🧠 Arsitektur Model CNN 1D
-        """)
-        st.code("""
-Input: (batch, 32, 13)   # (batch, MAX_LEN, N_MFCC)
+        with c2:
+            st.markdown("""
+            <div class="section-label">Arsitektur CNN 1D</div>
+            """, unsafe_allow_html=True)
+            st.code("""Input: (batch, 32, 13)
   ↓
-Conv1D(32, kernel=3, activation='relu', padding='same')
-MaxPooling1D(pool_size=2)
+Conv1D(32, k=3, relu, same)
+MaxPooling1D(2)
   ↓
-Conv1D(64, kernel=3, activation='relu', padding='same')
-MaxPooling1D(pool_size=2)
+Conv1D(64, k=3, relu, same)
+MaxPooling1D(2)
   ↓
 Flatten()
-Dense(128, activation='relu')
+Dense(128, relu)
 Dropout(0.3)
   ↓
-Dense(12, activation='softmax')  # 12 kelas nama
+Dense(12, softmax)
 
 Optimizer: Adam
-Loss: sparse_categorical_crossentropy
-        """, language="text")
+Loss: sparse_categorical_crossentropy""", language="text")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: TTS
 # ══════════════════════════════════════════════════════════════════════════════
-elif page == "Text-to-Speech":
+def page_tts():
     st.markdown("""
-    <div style='margin-bottom:8px;'>
-        <span class='hero-badge'>🔊 edge-tts</span>
-        <span class='hero-badge'>🌍 Multilingual Neural Voice</span>
-    </div>
-    <h1 style='font-family:Syne,sans-serif; font-size:2.2rem; margin:0 0 8px 0;'>
-        🔊 Text-to-Speech
-    </h1>
-    <p style='color:#94A3B8; font-size:1rem; margin-bottom:28px;'>
+    <div class="page-header">
+      <div class="section-label">AI · Text-to-Speech</div>
+      <div class="page-title">🔊 Neural Text-to-Speech</div>
+      <div class="page-sub">
         Konversi teks Bahasa Indonesia menjadi suara natural menggunakan
-        Microsoft Neural TTS multilingual. Pilih berbagai voice internasional dengan pengaturan kecepatan dan volume yang fleksibel.
-    </p>
+        Microsoft Neural TTS. Pilih voice, atur kecepatan & volume, lalu download MP3.
+      </div>
+    </div>
     """, unsafe_allow_html=True)
 
     if not TTS_AVAILABLE:
         st.error(f"❌ Modul TTS tidak tersedia: {TTS_ERROR}")
-        st.stop()
+        return
 
-    col_left, col_right = st.columns([3, 2])
+    col_left, col_right = st.columns([3, 2], gap="large")
 
     with col_left:
-        # Cek apakah ada hasil ASR untuk dipakai
+        # ASR carry-over
         asr_text = st.session_state.get("asr_text", "")
-
-        st.markdown("#### ✏️ Input Teks")
         if asr_text:
             st.markdown("""
-            <div style='background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3);
-                        border-radius:8px; padding:10px 14px; margin-bottom:12px;
-                        font-size:0.85rem; color:#34D399;'>
-                ✅ Hasil ASR tersedia — teks di bawah diisi dari prediksi ASR
+            <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25);
+                        border-radius:10px; padding:10px 16px; margin-bottom:14px;
+                        font-size:0.85rem; color:#34D399;">
+              ✅ Hasil ASR tersedia — teks di bawah diisi dari prediksi ASR
             </div>
             """, unsafe_allow_html=True)
 
+        st.markdown("""
+        <div class="settings-label">Teks Input</div>
+        """, unsafe_allow_html=True)
+
         text_input = st.text_area(
-            "Masukkan teks yang ingin diucapkan:",
-            value=asr_text if asr_text else "Halo, selamat datang di aplikasi SuaraKita. Aplikasi ini menggunakan teknologi pengenalan suara dan sintesis suara berbahasa Indonesia.",
-            height=160,
+            "Masukkan teks:",
+            value=asr_text if asr_text else "Halo, selamat datang di SuaraKita. Platform ASR dan TTS Bahasa Indonesia berbasis kecerdasan buatan.",
+            height=200,
             placeholder="Ketik teks Bahasa Indonesia di sini...",
             label_visibility="collapsed",
         )
 
         char_count = len(text_input)
-        st.caption("🌍 Mendukung Bahasa Indonesia, English, Japanese, dan Korean")
-        st.markdown(f"""
-        <div style='text-align:right; font-size:0.8rem; color:#64748B; margin:-12px 0 16px 0;'>
-            {char_count} karakter
-        </div>
-        """, unsafe_allow_html=True)
+        st.caption(f"🌍 Bahasa Indonesia, English, Japanese, Korean &nbsp;·&nbsp; {char_count} karakter")
+
+        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
         if st.button("🎵 Generate Suara", type="primary", use_container_width=True):
             if not text_input.strip():
                 st.warning("⚠️ Teks tidak boleh kosong!")
             else:
-                with st.spinner("Menghasilkan audio... ⏳"):
+                with st.spinner("Menghasilkan audio neural... ⏳"):
                     try:
-                        voice_id   = st.session_state.get("tts_voice", "id-ID-GadisNeural")
-                        speed_val  = st.session_state.get("tts_speed", "+0%")
+                        voice_id   = st.session_state.get("tts_voice",  "id-ID-GadisNeural")
+                        speed_val  = st.session_state.get("tts_speed",  "+0%")
                         volume_val = st.session_state.get("tts_volume", "+0%")
 
                         audio_bytes = generate_speech_bytes(
-                            text_input,
-                            voice=voice_id,
-                            rate=speed_val,
-                            volume=volume_val,
+                            text_input, voice=voice_id,
+                            rate=speed_val, volume=volume_val,
                         )
 
                         st.markdown("""
-                        <div style='background:rgba(16,185,129,0.1);
-                                    border:1px solid rgba(16,185,129,0.3);
-                                    border-radius:12px; padding:20px;
-                                    margin:16px 0;'>
-                            <div style='font-weight:600; color:#34D399; margin-bottom:12px;'>
-                                ✅ Audio berhasil dibuat!
-                            </div>
+                        <div style="background:rgba(16,185,129,0.08);
+                                    border:1px solid rgba(16,185,129,0.25);
+                                    border-radius:var(--r-md); padding:20px; margin:16px 0;">
+                          <div style="font-weight:700; color:#34D399; margin-bottom:14px;
+                                      font-size:0.9rem;">
+                            ✅ Audio berhasil dibuat!
+                          </div>
                         """, unsafe_allow_html=True)
 
                         st.audio(audio_bytes, format="audio/mp3")
 
-                        dl_name = f"tts_{int(time.time())}.mp3"
                         st.download_button(
                             "⬇️ Download MP3",
                             data=audio_bytes,
-                            file_name=dl_name,
+                            file_name=f"suarakita_{int(time.time())}.mp3",
                             mime="audio/mpeg",
                             use_container_width=True,
                         )
@@ -957,231 +1630,250 @@ elif page == "Text-to-Speech":
                         st.error(f"❌ Gagal generate audio: {e}")
                         st.exception(e)
 
-    with col_right:
-        st.markdown("#### ⚙️ Pengaturan Suara")
-
-        # Voice selection
-        voice_names = list_voices()
-
-        selected_voice_name = st.selectbox(
-            "🌍 Pilih Voice",
-            voice_names,
-            index=0,
-            help="Pilih voice multilingual neural"
-        )
-
-        voice_id = get_voice_id(selected_voice_name)
-        st.session_state["tts_voice"] = voice_id
-
-        # Gender badge
-        if "Female" in selected_voice_name or "Perempuan" in selected_voice_name:
-            badge_color = "#EC4899"
-            badge_icon  = "♀️"
-        else:
-            badge_color = "#3B82F6"
-            badge_icon  = "♂️"
-        st.markdown(f"""
-        <div style='background:rgba(0,0,0,0.2); border:1px solid {badge_color}50;
-                    border-radius:8px; padding:8px 14px; margin-bottom:16px;
-                    font-size:0.85rem; color:{badge_color};'>
-            {badge_icon} Neural Voice: <code style='color:{badge_color}'>{voice_id}</code>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Speed
-        speed_names = list_speeds()
-        selected_speed = st.selectbox("⚡ Kecepatan Bicara", speed_names, index=1)
-        speed_val = get_speed_value(selected_speed)
-        st.session_state["tts_speed"] = speed_val
-
-        # Volume
-        volume_names = list_volumes()
-        selected_volume = st.selectbox("🔉 Volume", volume_names, index=1)
-        volume_val = get_volume_value(selected_volume)
-        st.session_state["tts_volume"] = volume_val
-
-        # Settings preview
-        st.markdown(f"""
-        <div class="card" style='padding:16px; margin-top:4px;'>
-            <div style='font-size:0.82rem; font-weight:600;
-                        color:#94A3B8; margin-bottom:10px;'>
-                Konfigurasi Aktif
-            </div>
-            <div style='font-size:0.85rem; line-height:2; color:#E2E8F0;'>
-                🎤 Suara &nbsp;&nbsp;&nbsp; <code>{voice_id}</code><br>
-                ⚡ Rate &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <code>{speed_val}</code><br>
-                🔉 Volume &nbsp; <code>{volume_val}</code>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Contoh teks
-        st.markdown("#### 💬 Contoh Teks")
+        # Example texts
+        st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+        st.markdown('<div class="settings-label">Contoh Teks Cepat</div>', unsafe_allow_html=True)
         examples = [
             "Aku imut, lucu, dan menggemaskan.",
             "Selamat pagi, hari ini cuacanya cerah.",
-            "Hello everyone, this is SuaraKita.",
+            "Hello everyone, this is SuaraKita AI.",
             "Artificial intelligence is amazing.",
             "こんにちは、元気ですか？",
-            "당신은 정말 잘생겼어요.",
         ]
         for ex in examples:
-            if st.button(f'"{ex[:35]}..."' if len(ex) > 35 else f'"{ex}"',
-                         use_container_width=True):
-                st.session_state["tts_example"] = ex
+            label = f'"{ex[:40]}…"' if len(ex) > 40 else f'"{ex}"'
+            if st.button(label, use_container_width=True, key=f"ex_{ex[:15]}"):
+                st.session_state["tts_example_text"] = ex
                 st.rerun()
 
-        if "tts_example" in st.session_state:
-            st.info(f"💡 Salin teks: *{st.session_state['tts_example']}*")
+        if "tts_example_text" in st.session_state:
+            st.info(f"💡 Salin: *{st.session_state['tts_example_text']}*")
+
+    with col_right:
+        st.markdown('<div class="settings-label">Pengaturan Voice</div>', unsafe_allow_html=True)
+
+        # Voice selection
+        voice_names = list_voices()
+        sel_voice = st.selectbox("🌍 Pilih Voice", voice_names, index=0)
+        voice_id  = get_voice_id(sel_voice)
+        st.session_state["tts_voice"] = voice_id
+
+        is_female = "Female" in sel_voice or "Perempuan" in sel_voice or "Gadis" in sel_voice
+        badge_color = "#EC4899" if is_female else "#3B82F6"
+        badge_icon  = "♀️" if is_female else "♂️"
+        st.markdown(f"""
+        <div class="voice-badge" style="background:rgba({'236,72,153' if is_female else '59,130,246'},0.1);
+             border:1px solid rgba({'236,72,153' if is_female else '59,130,246'},0.3);
+             color:{badge_color};">
+          {badge_icon} <code style="color:{badge_color}; background:transparent;">{voice_id}</code>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+
+        # Speed
+        speed_names = list_speeds()
+        sel_speed   = st.selectbox("⚡ Kecepatan Bicara", speed_names, index=1)
+        speed_val   = get_speed_value(sel_speed)
+        st.session_state["tts_speed"] = speed_val
+
+        # Volume
+        vol_names = list_volumes()
+        sel_vol   = st.selectbox("🔉 Volume", vol_names, index=1)
+        vol_val   = get_volume_value(sel_vol)
+        st.session_state["tts_volume"] = vol_val
+
+        # Active config
+        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="glass-card" style="padding:18px;">
+          <div class="settings-label">Konfigurasi Aktif</div>
+          <div style="font-size:0.85rem; line-height:2.2; color:var(--text-2);">
+            🎤 Voice &nbsp;&nbsp;
+              <code style="background:var(--surface-3); padding:2px 8px; border-radius:5px;
+                           font-size:0.78rem; color:#60A5FA;">{voice_id}</code><br>
+            ⚡ Rate &nbsp;&nbsp;&nbsp;
+              <code style="background:var(--surface-3); padding:2px 8px; border-radius:5px;
+                           font-size:0.78rem; color:#34D399;">{speed_val}</code><br>
+            🔉 Vol &nbsp;&nbsp;&nbsp;&nbsp;
+              <code style="background:var(--surface-3); padding:2px 8px; border-radius:5px;
+                           font-size:0.78rem; color:#A78BFA;">{vol_val}</code>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ASR shortcut
+        if st.session_state.get("asr_result"):
+            st.markdown(f"""
+            <div class="glass-card" style="padding:16px; margin-top:16px;
+                 border-color:rgba(16,185,129,0.25);">
+              <div class="settings-label">Dari ASR</div>
+              <div style="font-size:0.9rem; color:#34D399; font-weight:600;">
+                🎙️ {st.session_state['asr_result'].capitalize()}
+              </div>
+              <div style="font-size:0.8rem; color:var(--text-4); margin-top:4px;">
+                Terdeteksi dari rekaman terakhir
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: ABOUT
 # ══════════════════════════════════════════════════════════════════════════════
-elif page == "Tentang Proyek":
+def page_about():
     st.markdown("""
-    <h1 style='font-family:Syne,sans-serif; font-size:2.2rem; margin:0 0 8px 0;'>
-        ℹ️ Tentang Proyek
-    </h1>
-    <p style='color:#94A3B8; margin-bottom:28px;'>
+    <div class="page-header">
+      <div class="section-label">Proyek · Deep Learning</div>
+      <div class="page-title">ℹ️ Tentang SuaraKita</div>
+      <div class="page-sub">
         Proyek akhir berbasis Deep Learning — ASR & TTS Bahasa Indonesia
-    </p>
+        menggunakan CNN, MFCC, dan Microsoft Neural TTS.
+      </div>
+    </div>
     """, unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
+    c1, c2 = st.columns(2, gap="medium")
 
-    with col1:
+    with c1:
         st.markdown("""
-        <div class="card">
-            <div style='font-size:1.8rem; margin-bottom:12px;'>🧠</div>
-            <div style='font-family:Syne,sans-serif; font-weight:700;
-                        font-size:1.05rem; margin-bottom:12px;'>Teknologi ASR</div>
-            <div style='font-size:0.875rem; color:#94A3B8; line-height:1.9;'>
-                🔹 <strong>Librosa</strong> — Ekstraksi fitur MFCC<br>
-                🔹 <strong>TensorFlow/Keras</strong> — Training model CNN<br>
-                🔹 <strong>NumPy</strong> — Komputasi numerik<br>
-                🔹 <strong>scikit-learn</strong> — Evaluasi model<br>
-                🔹 <strong>Matplotlib</strong> — Visualisasi MFCC<br>
-                🔹 <strong>soundfile</strong> — I/O file audio<br>
-                🔹 <strong>Google Colab</strong> — Platform training
-            </div>
+        <div class="glass-card">
+          <div class="feat-icon feat-icon-blue">🧠</div>
+          <div class="feat-title">Teknologi ASR</div>
+          <div class="tech-grid">
+            <div class="tech-pill">Librosa</div>
+            <div class="tech-pill">TensorFlow</div>
+            <div class="tech-pill">Keras</div>
+            <div class="tech-pill">NumPy</div>
+            <div class="tech-pill">scikit-learn</div>
+            <div class="tech-pill">Matplotlib</div>
+            <div class="tech-pill">soundfile</div>
+            <div class="tech-pill">Colab</div>
+          </div>
         </div>
         """, unsafe_allow_html=True)
 
         st.markdown("""
-        <div class="card">
-            <div style='font-size:1.8rem; margin-bottom:12px;'>📊</div>
-            <div style='font-family:Syne,sans-serif; font-weight:700;
-                        font-size:1.05rem; margin-bottom:12px;'>Pipeline ASR</div>
-            <div style='font-size:0.875rem; color:#94A3B8; line-height:2;'>
-                1️⃣ Input audio (Mikrofon / WAV 16kHz)<br>
-                2️⃣ Normalisasi & Trim silence<br>
-                3️⃣ Pad/Truncate ke 2 detik<br>
-                4️⃣ Ekstraksi MFCC (13 koef, 32 frame)<br>
-                5️⃣ Inferensi CNN 1D model<br>
-                6️⃣ Output: nama + confidence score
-            </div>
+        <div class="glass-card">
+          <div class="feat-icon feat-icon-purple">📊</div>
+          <div class="feat-title">Pipeline ASR</div>
+          <div style="font-size:0.88rem; color:var(--text-3); line-height:2.2;">
+            1️⃣ Input audio (Mikrofon / WAV 16kHz)<br>
+            2️⃣ Normalisasi &amp; Trim silence<br>
+            3️⃣ Pad/Truncate → 2 detik<br>
+            4️⃣ Ekstraksi MFCC (13 koef, 32 frame)<br>
+            5️⃣ Inferensi CNN 1D model<br>
+            6️⃣ Output: nama + confidence score
+          </div>
         </div>
         """, unsafe_allow_html=True)
 
-    with col2:
+    with c2:
         st.markdown("""
-        <div class="card">
-            <div style='font-size:1.8rem; margin-bottom:12px;'>🔊</div>
-            <div style='font-family:Syne,sans-serif; font-weight:700;
-                        font-size:1.05rem; margin-bottom:12px;'>Teknologi TTS</div>
-            <div style='font-size:0.875rem; color:#94A3B8; line-height:1.9;'>
-                🔹 <strong>edge-tts</strong> — Microsoft Neural TTS<br>
-                🔹 <strong>asyncio</strong> — Async audio generation<br>
-                🔹 <strong>pydub</strong> — Audio processing<br>
-                🔹 <strong>id-ID-GadisNeural</strong> — Suara wanita<br>
-                🔹 <strong>id-ID-ArdiNeural</strong> — Suara pria<br>
-                🔹 Format output: MP3
-            </div>
+        <div class="glass-card">
+          <div class="feat-icon feat-icon-cyan">🔊</div>
+          <div class="feat-title">Teknologi TTS</div>
+          <div class="tech-grid">
+            <div class="tech-pill">edge-tts</div>
+            <div class="tech-pill">asyncio</div>
+            <div class="tech-pill">pydub</div>
+            <div class="tech-pill">MP3</div>
+            <div class="tech-pill">Neural TTS</div>
+            <div class="tech-pill">Multilingual</div>
+          </div>
         </div>
         """, unsafe_allow_html=True)
 
         st.markdown("""
-        <div class="card">
-            <div style='font-size:1.8rem; margin-bottom:12px;'>🏗️</div>
-            <div style='font-family:Syne,sans-serif; font-weight:700;
-                        font-size:1.05rem; margin-bottom:12px;'>Struktur Proyek</div>
-            <div style='font-size:0.8rem; color:#94A3B8;'>
+        <div class="glass-card">
+          <div class="feat-icon feat-icon-green">🏗️</div>
+          <div class="feat-title">Struktur Proyek</div>
         """, unsafe_allow_html=True)
-        st.code("""
-speech-app/
-├── app.py               # Main Streamlit app
+        st.code("""speech-app/
+├── app.py
 ├── requirements.txt
 ├── asr/
-│   ├── preprocess.py    # Audio preprocessing
-│   ├── feature_extraction.py  # MFCC
-│   ├── predict.py       # Model inference
-│   ├── utils.py         # Utilities
-│   ├── model/
-│   │   └── model_asr.h5
-│   └── training/
-│       └── asr_training.ipynb
+│   ├── preprocess.py
+│   ├── feature_extraction.py
+│   ├── predict.py
+│   ├── utils.py
+│   └── model/model_asr.h5
 └── tts/
-    ├── generate.py      # edge-tts wrapper
-    ├── voices.py        # Voice config
-    └── audio_output/
-        """, language="text")
-        st.markdown("</div></div>", unsafe_allow_html=True)
+    ├── generate.py
+    └── voices.py""", language="text")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    # Dataset info
+    # Dataset specs
+    st.markdown("<div style='height:32px'></div>", unsafe_allow_html=True)
+    st.markdown('<div class="section-label">Spesifikasi Dataset</div>', unsafe_allow_html=True)
     st.markdown("""
-    <div class="card" style='margin-top:8px;'>
-        <div style='font-size:1.8rem; margin-bottom:12px;'>🗂️</div>
-        <div style='font-family:Syne,sans-serif; font-weight:700;
-                    font-size:1.05rem; margin-bottom:16px;'>Spesifikasi Dataset</div>
-        <div style='display:grid; grid-template-columns:repeat(3,1fr); gap:16px;'>
-            <div style='background:#1C2537; border-radius:10px; padding:14px; text-align:center;'>
-                <div style='font-size:1.5rem; font-weight:800;
-                            color:#3B82F6; font-family:Syne,sans-serif;'>12</div>
-                <div style='font-size:0.8rem; color:#94A3B8; margin-top:4px;'>Kelas Nama</div>
-            </div>
-            <div style='background:#1C2537; border-radius:10px; padding:14px; text-align:center;'>
-                <div style='font-size:1.5rem; font-weight:800;
-                            color:#10B981; font-family:Syne,sans-serif;'>500+</div>
-                <div style='font-size:0.8rem; color:#94A3B8; margin-top:4px;'>Total Audio</div>
-            </div>
-            <div style='background:#1C2537; border-radius:10px; padding:14px; text-align:center;'>
-                <div style='font-size:1.5rem; font-weight:800;
-                            color:#F59E0B; font-family:Syne,sans-serif;'>16kHz</div>
-                <div style='font-size:0.8rem; color:#94A3B8; margin-top:4px;'>Sample Rate</div>
-            </div>
-            <div style='background:#1C2537; border-radius:10px; padding:14px; text-align:center;'>
-                <div style='font-size:1.5rem; font-weight:800;
-                            color:#8B5CF6; font-family:Syne,sans-serif;'>1–2s</div>
-                <div style='font-size:0.8rem; color:#94A3B8; margin-top:4px;'>Durasi Audio</div>
-            </div>
-            <div style='background:#1C2537; border-radius:10px; padding:14px; text-align:center;'>
-                <div style='font-size:1.5rem; font-weight:800;
-                            color:#22D3EE; font-family:Syne,sans-serif;'>WAV</div>
-                <div style='font-size:0.8rem; color:#94A3B8; margin-top:4px;'>Format File</div>
-            </div>
-            <div style='background:#1C2537; border-radius:10px; padding:14px; text-align:center;'>
-                <div style='font-size:1.5rem; font-weight:800;
-                            color:#F43F5E; font-family:Syne,sans-serif;'>CNN</div>
-                <div style='font-size:0.8rem; color:#94A3B8; margin-top:4px;'>Model Arsitektur</div>
-            </div>
+    <div class="glass-card">
+      <div class="spec-grid">
+        <div class="spec-item">
+          <div class="spec-val">12</div>
+          <div class="spec-lbl">Kelas Nama</div>
         </div>
+        <div class="spec-item">
+          <div class="spec-val">500+</div>
+          <div class="spec-lbl">Total Audio</div>
+        </div>
+        <div class="spec-item">
+          <div class="spec-val">16kHz</div>
+          <div class="spec-lbl">Sample Rate</div>
+        </div>
+        <div class="spec-item">
+          <div class="spec-val">1–2s</div>
+          <div class="spec-lbl">Durasi</div>
+        </div>
+        <div class="spec-item">
+          <div class="spec-val">WAV</div>
+          <div class="spec-lbl">Format</div>
+        </div>
+        <div class="spec-item">
+          <div class="spec-val">CNN</div>
+          <div class="spec-lbl">Arsitektur</div>
+        </div>
+      </div>
     </div>
     """, unsafe_allow_html=True)
 
     # GitHub
+    st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
     st.markdown("""
-    <div class="card" style='text-align:center; margin-top:8px;'>
-        <div style='font-size:1.8rem; margin-bottom:12px;'>🐙</div>
-        <div style='font-family:Syne,sans-serif; font-weight:700; font-size:1.05rem;
-                    margin-bottom:8px;'>Version Control</div>
-        <div style='color:#94A3B8; font-size:0.9rem; margin-bottom:16px;'>
-            Proyek ini dikelola menggunakan GitHub untuk kolaborasi tim.
-        </div>
-        <code style='background:#1C2537; border:1px solid #2A3650;
-                     border-radius:8px; padding:8px 16px; font-size:0.9rem;
-                     color:#58A6FF;'>
-            git clone https://github.com/asri20/suarakita-asr-tts
-        </code>
+    <div class="glass-card" style="text-align:center; padding:32px;">
+      <div style="font-size:2rem; margin-bottom:10px;">🐙</div>
+      <div style="font-weight:700; font-size:1rem; color:var(--text); margin-bottom:6px;">
+        Version Control
+      </div>
+      <div style="font-size:0.9rem; color:var(--text-3); margin-bottom:18px;">
+        Dikelola menggunakan GitHub untuk kolaborasi tim.
+      </div>
+      <code style="font-family:'JetBrains Mono',monospace; font-size:0.9rem; color:#60A5FA;
+                   background:var(--surface-3); padding:10px 18px; border-radius:8px;
+                   display:inline-block;">
+        git clone https://github.com/asri20/suarakita-asr-tts
+      </code>
     </div>
     """, unsafe_allow_html=True)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# RENDER
+# ══════════════════════════════════════════════════════════════════════════════
+st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
+
+topnav()
+
+page = st.session_state.page
+if page == "home":
+    page_home()
+elif page == "asr":
+    page_asr()
+elif page == "tts":
+    page_tts()
+elif page == "about":
+    page_about()
+else:
+    page_home()
+
+st.markdown('</div>', unsafe_allow_html=True)
