@@ -129,7 +129,9 @@ section[data-testid="stVerticalBlock"] { gap: 0 !important; }
 /* ══════════════════════════════════════════════════════════
    HERO
 ══════════════════════════════════════════════════════════ */
-.hero { text-align: center; padding: 4rem 0 2rem; position: relative; }
+.hero { text-align: center; padding: 4rem 0 2rem; position: relative;   display: flex;
+  flex-direction: column;
+  align-items: center; }
 .hero-badge {
   display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px;
   border-radius: 999px; background: rgba(139,92,246,.1);
@@ -140,11 +142,27 @@ section[data-testid="stVerticalBlock"] { gap: 0 !important; }
 .hero-h1 {
   font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; line-height: 1.1; margin: 0 0 1rem; letter-spacing: -1px;
 }
+.hero p {
+    width: 100%;
+    text-align: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
 .hero-h1-grad {
   background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 .hero-sub {
-  font-size: 1.05rem; color: var(--text-muted); max-width: 650px; margin: 0 auto 2.5rem; line-height: 1.6;
+  max-width: 650px;
+  margin: 0 auto 2.5rem auto !important;
+
+  display: block;
+  text-align: center !important;
+
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  line-height: 1.8;
+
+  padding: 0;
 }
 
 /* Buttons for CTA */
@@ -272,11 +290,11 @@ section[data-testid="stVerticalBlock"] { gap: 0 !important; }
    STREAMLIT OVERRIDES (Matched to Screenshot UI)
 ══════════════════════════════════════════════════════════ */
 .stButton > button {
-  background: transparent !important; color: white !important; border: 1px solid var(--border-hover) !important;
+  background: rgba(139,92,246,.08) !important; border: 1px solid rgba(139,92,246,.25) !important;
   border-radius: 8px !important; font-weight: 600 !important; font-size: 0.95rem !important;
-  padding: 0.75rem 1.5rem !important; transition: 0.3s !important; width: 100%;
+  padding: 0.75rem 1.5rem !important; transition: 0.3s !important; width: 100%; height: 55px;
 }
-.stButton > button:hover { background: rgba(255,255,255,0.05) !important; border-color: white !important; }
+.stButton > button:hover { background:rgba(139,92,246,.15) !important; border-color: #A855F7 !important; }
 
 .stTextArea textarea {
   background: var(--bg-card) !important; border: 1px solid var(--border-subtle) !important;
@@ -488,16 +506,29 @@ def render_nav():
     """, unsafe_allow_html=True)
 
     # Hidden routing
-    c1, c2, c3, c4, _ = st.columns([1, 1, 1, 1, 4])
-    with c1:
-        if st.button("🏠 Beranda", key="n_home"): st.session_state.page = "home"; st.rerun()
-    with c2:
-        if st.button("🎤 ASR", key="n_asr"): st.session_state.page = "asr"; st.rerun()
-    with c3:
-        if st.button("🔊 TTS", key="n_tts"): st.session_state.page = "tts"; st.rerun()
-    with c4:
-        if st.button("ℹ️ Pipeline", key="n_about"): st.session_state.page = "about"; st.rerun()
+    st.markdown("<div style='margin-top:20px'></div>", unsafe_allow_html=True)
 
+    c1, c2, c3, c4 = st.columns(4)
+
+    with c1:
+        if st.button("🏠 Beranda", key="n_home", use_container_width=True):
+            st.session_state.page = "home"
+            st.rerun()
+
+    with c2:
+        if st.button("🎤 ASR", key="n_asr", use_container_width=True):
+            st.session_state.page = "asr"
+            st.rerun()
+
+    with c3:
+        if st.button("🔊 TTS", key="n_tts", use_container_width=True):
+            st.session_state.page = "tts"
+            st.rerun()
+
+    with c4:
+        if st.button("ℹ️ Pipeline", key="n_about", use_container_width=True):
+            st.session_state.page = "about"
+            st.rerun()
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: HOME
 # ══════════════════════════════════════════════════════════════════════════════
